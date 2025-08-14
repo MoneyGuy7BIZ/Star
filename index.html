@@ -1,204 +1,1112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Mode Star Rating App</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Full Page Dark Star Rating App (With Billing)</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #121212;
-        color: #f1f1f1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        min-height: 100vh;
-        margin: 0;
-    }
+/* =========================
+   Global / Layout Styling
+   ========================= */
 
-    .container {
-        background: #1c1c1c;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        max-width: 600px;
-        width: 90%;
-        margin-top: 30px;
-        text-align: center;
-    }
+:root{
+  --bg:#0e0e10;
+  --card:#161618;
+  --muted:#9aa0a6;
+  --accent:#00ff7a;
+  --gold:#ffd166;
+  --glass: rgba(255,255,255,0.03);
+  --danger:#ff5c7a;
+  --panel:#141416;
+  --soft:#222225;
+}
 
-    h1 {
-        margin-bottom: 20px;
-    }
+/* Reset-ish */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#070708 0%, #0f1112 100%); color:#e8eef1;}
 
-    input {
-        padding: 12px;
-        font-size: 18px;
-        border-radius: 6px;
-        border: none;
-        outline: none;
-        width: 80%;
-        margin-bottom: 20px;
-        background-color: #1f1f1f;
-        color: #f1f1f1;
-    }
+/* Make the app take most of the page */
+.app {
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+  gap:24px;
+}
 
-    .star-rating {
-        display: flex;
-        justify-content: center;
-        font-size: 50px;
-        cursor: pointer;
-        margin-bottom: 20px;
-    }
+/* Main container: big "card" that covers most width on large screens */
+.container {
+  width:100%;
+  max-width:1200px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:14px;
+  padding:20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  display:grid;
+  grid-template-columns: 1fr 420px;
+  gap:20px;
+  align-items:start;
+}
 
-    .star {
-        color: #444;
-        transition: color 0.2s;
-    }
+/* On small screens stack */
+@media (max-width:900px){
+  .container{grid-template-columns:1fr; padding:16px;}
+}
 
-    .star.lit {
-        color: gold;
-    }
+/* Left panel: rating form big and centered */
+.left {
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));
+  border-radius:10px;
+  padding:24px;
+  min-height:480px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
 
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-        border: none;
-        border-radius: 6px;
-        background-color: #333;
-        color: white;
-        cursor: pointer;
-        margin-top: 10px;
-    }
+/* Right panel: ratings list + bill */
+.right {
+  background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  border-radius:10px;
+  padding:20px;
+  min-height:480px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
 
-    button:hover {
-        background-color: #444;
-    }
+/* Header */
+.title {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.logo {
+  width:48px;
+  height:48px;
+  border-radius:10px;
+  background:linear-gradient(135deg,#09121b,#06212c);
+  display:grid;
+  place-items:center;
+  font-weight:700;
+  color:var(--accent);
+  font-size:20px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.5), inset 0 -4px 12px rgba(255,255,255,0.02);
+}
+.h1 {font-size:20px;margin:0}
+.h2 {font-size:13px;color:var(--muted);margin:0}
 
-    .results-list {
-        margin-top: 30px;
-        background: #222;
-        padding: 20px;
-        border-radius: 8px;
-        text-align: left;
-    }
+/* Input row */
+.row {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
 
-    .result-item {
-        margin: 5px 0;
-    }
+/* Name input */
+.input {
+  flex:1;
+  background:var(--soft);
+  border-radius:8px;
+  padding:12px 14px;
+  border:1px solid rgba(255,255,255,0.03);
+  color:inherit;
+  font-size:16px;
+  outline:none;
+}
 
-    .average {
-        margin-top: 15px;
-        font-weight: bold;
-        font-size: 18px;
-        color: #ffcc00;
-    }
+/* Big star area */
+.star-area {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  padding:12px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.005), rgba(255,255,255,0.01));
+  border-radius:8px;
+}
+.stars {
+  display:flex;
+  gap:10px;
+  font-size:54px;
+  user-select:none;
+  cursor:pointer;
+}
+.star {
+  transition: transform .12s ease, color .12s ease, text-shadow .12s ease;
+  color: #2f3336; /* dark when unlit */
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+.star:hover { transform: translateY(-6px) scale(1.06); }
+.star.lit { color:var(--gold); text-shadow: 0 6px 18px rgba(255,200,60,0.08); }
+
+/* Buttons row */
+.buttons {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+}
+.btn {
+  padding:10px 14px;
+  border-radius:8px;
+  font-weight:600;
+  border:1px solid rgba(255,255,255,0.03);
+  cursor:pointer;
+  background:var(--panel);
+  color:inherit;
+}
+.btn.primary { background: linear-gradient(90deg,#0f6f54,#00d27a); color:#041209; }
+.btn.ghost { background:transparent; border:1px dashed rgba(255,255,255,0.03); color:var(--muted); }
+.btn.warn { background:linear-gradient(90deg,#7a2b2b,#ff5c7a); color:white; }
+
+/* Result text */
+.result {
+  text-align:center;
+  color:var(--muted);
+  font-size:15px;
+}
+
+/* Ratings list */
+.list {
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));
+  border-radius:8px;
+  padding:14px;
+  overflow:auto;
+  max-height:260px;
+  border:1px solid rgba(255,255,255,0.02);
+}
+.list .item {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 6px;
+  border-bottom:1px dashed rgba(255,255,255,0.02);
+  align-items:center;
+}
+.list .item:last-child{border-bottom:0}
+.item .left {display:flex; gap:12px; align-items:center}
+.item .name {font-weight:600}
+.item .meta {color:var(--muted); font-size:13px}
+
+/* Small controls inside list item */
+.item .controls {display:flex; gap:8px}
+.icon-btn {
+  padding:6px 8px;
+  border-radius:6px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.02);
+  cursor:pointer;
+  color:var(--muted);
+}
+.icon-btn:hover{color:var(--accent); transform:translateY(-2px)}
+
+/* Stats box */
+.stats {
+  padding:10px;
+  border-radius:8px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.006), rgba(255,255,255,0.01));
+  display:flex;
+  gap:12px;
+  justify-content:space-between;
+  align-items:center;
+}
+.stat {
+  text-align:center;
+  flex:1;
+}
+.stat .num {font-size:18px; font-weight:700; color:var(--accent)}
+.small { font-size:12px; color:var(--muted) }
+
+/* Bill Panel */
+.bill {
+  border-radius:8px;
+  background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(255,255,255,0.01));
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.bill .items {display:flex; gap:8px; flex-direction:column}
+.bill-row {display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px; border-radius:6px;}
+.bill-row .info {display:flex; gap:10px; align-items:center}
+.qty-controls {display:flex; gap:6px; align-items:center}
+.small-ghost {background:transparent; border:1px solid rgba(255,255,255,0.02); padding:6px 8px; border-radius:6px}
+
+/* Footer actions */
+.footer-actions {display:flex; gap:8px; justify-content:flex-end; align-items:center}
+.note {color:var(--muted); font-size:13px;}
+
+/* Tiny helpers */
+.hidden { display:none; }
+.center { display:flex; align-items:center; justify-content:center; gap:8px; }
+
+/* Tooltip-ish */
+.hint { font-size:12px; color:var(--muted); }
+
 </style>
 </head>
 <body>
+  <div class="app">
+    <div class="container" role="application" aria-label="Star Rating App">
+      <!-- LEFT: Main rating section -->
+      <section class="left" aria-label="Rating Section">
+        <div class="title">
+          <div class="logo">★RD</div>
+          <div>
+            <h3 class="h1">Full Page Dark Star Rating</h3>
+            <p class="h2">Type a name, pick stars, submit. Add many people & build a bill after 3 people.</p>
+          </div>
+        </div>
 
-<div class="container">
-    <h1>⭐ Rate Someone</h1>
-    <input type="text" id="nameInput" placeholder="Enter name to rate...">
-    
-    <div class="star-rating" id="stars">
-        <span class="star" data-value="1">★</span>
-        <span class="star" data-value="2">★</span>
-        <span class="star" data-value="3">★</span>
-        <span class="star" data-value="4">★</span>
-        <span class="star" data-value="5">★</span>
+        <!-- Name input -->
+        <div class="row" style="margin-top:6px;">
+          <input id="nameInput" class="input" placeholder="Enter name to rate (person/product)..." aria-label="Name to rate" />
+          <button id="submitRatingBtn" class="btn primary" title="Submit rating">Submit</button>
+          <button id="newPersonBtn" class="btn ghost" title="Reset for a new person" style="display:none">New Person</button>
+        </div>
+
+        <!-- Star area -->
+        <div class="star-area" aria-hidden="false">
+          <div style="display:flex; width:100%; justify-content:space-between; align-items:center;">
+            <div style="display:flex; flex-direction:column;">
+              <div style="font-size:13px;color:var(--muted)">Pick rating (click or use ← →)</div>
+              <div class="result hint" id="pendingHint">No pending rating</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="small hint">Persisted: <span id="persistHint">Yes</span></div>
+            </div>
+          </div>
+
+          <div class="stars" id="stars" tabindex="0" role="radiogroup" aria-label="5 star rating">
+            <span class="star" data-value="1" role="radio" aria-checked="false" aria-label="1 star">★</span>
+            <span class="star" data-value="2" role="radio" aria-checked="false" aria-label="2 stars">★</span>
+            <span class="star" data-value="3" role="radio" aria-checked="false" aria-label="3 stars">★</span>
+            <span class="star" data-value="4" role="radio" aria-checked="false" aria-label="4 stars">★</span>
+            <span class="star" data-value="5" role="radio" aria-checked="false" aria-label="5 stars">★</span>
+          </div>
+
+          <!-- Extra controls: keyboard / clear -->
+          <div class="buttons" style="margin-top:6px;">
+            <button id="clearPendingBtn" class="btn">Clear</button>
+            <button id="randomRateBtn" class="btn">Random</button>
+            <button id="copyLinkBtn" class="btn ghost" title="Copy state to clipboard">Copy JSON</button>
+          </div>
+        </div>
+
+        <!-- Misc actions -->
+        <div style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
+          <div class="note">Tip: Click a star to choose, then press <strong>Submit</strong>. Edit ratings from the list.</div>
+          <div style="display:flex; gap:8px;">
+            <button id="exportCsv" class="btn ghost">Export CSV</button>
+            <button id="resetAll" class="btn warn">Reset All</button>
+          </div>
+        </div>
+
+        <!-- Big visual summary -->
+        <div class="stats" style="margin-top:8px;">
+          <div class="stat">
+            <div class="small">Average</div>
+            <div class="num" id="avgNum">—</div>
+          </div>
+          <div class="stat">
+            <div class="small">Median</div>
+            <div class="num" id="medianNum">—</div>
+          </div>
+          <div class="stat">
+            <div class="small">Count</div>
+            <div class="num" id="countNum">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Ratings list + Bill -->
+      <aside class="right" aria-label="Ratings & Bill">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h4 style="margin:0">All Ratings</h4>
+            <div class="small hint">Show list, edit items, compute average live</div>
+          </div>
+          <div>
+            <button id="openBillBtn" class="btn primary" style="display:none">Open Bill 🧾</button>
+          </div>
+        </div>
+
+        <!-- List of ratings -->
+        <div class="list" id="ratingsList" role="list" aria-label="Ratings list">
+          <!-- items injected here -->
+          <div id="emptyHint" class="hint center">No ratings yet — submit one to start</div>
+        </div>
+
+        <!-- Actions for list -->
+        <div style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
+          <div class="hint">You can edit or delete any entry. Click a name to load into form.</div>
+          <div style="display:flex; gap:8px;">
+            <button id="sortByRating" class="btn">Sort ↓</button>
+            <button id="clearListBtn" class="btn ghost">Clear List</button>
+          </div>
+        </div>
+
+        <!-- Bill panel -->
+        <div class="bill" id="billPanel" style="display:none">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>Bill Builder</strong> <div class="small hint">Add items, set quantities, checkout</div>
+            </div>
+            <div class="small hint">After 3 ratings you can open this.</div>
+          </div>
+
+          <div class="items" id="billItems">
+            <!-- item rows -->
+            <div class="bill-row">
+              <div class="info">
+                <div style="font-size:20px">🥤</div>
+                <div>
+                  <div style="font-weight:700">Water</div>
+                  <div class="small-ghost small">$1.00 each</div>
+                </div>
+              </div>
+              <div class="qty-controls">
+                <button class="icon-btn" data-action="dec" data-item="water">−</button>
+                <div id="waterQty" style="min-width:28px; text-align:center">0</div>
+                <button class="icon-btn" data-action="inc" data-item="water">+</button>
+              </div>
+            </div>
+
+            <div class="bill-row">
+              <div class="info">
+                <div style="font-size:20px">🍔</div>
+                <div>
+                  <div style="font-weight:700">Food</div>
+                  <div class="small-ghost small">$2.00 each</div>
+                </div>
+              </div>
+              <div class="qty-controls">
+                <button class="icon-btn" data-action="dec" data-item="food">−</button>
+                <div id="foodQty" style="min-width:28px; text-align:center">0</div>
+                <button class="icon-btn" data-action="inc" data-item="food">+</button>
+              </div>
+            </div>
+
+            <div class="bill-row" style="display:flex; gap:8px; align-items:center; justify-content:space-between">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button id="addCustomItem" class="btn ghost">+ Custom Item</button>
+                <div class="hint">Add any item (name & price)</div>
+              </div>
+              <div id="customArea" style="display:none">
+                <input id="customName" placeholder="Name" class="input" style="width:140px;padding:6px;font-size:13px" />
+                <input id="customPrice" placeholder="Price" class="input" style="width:90px;padding:6px;font-size:13px" />
+                <button id="addCustomConfirm" class="btn">Add</button>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="small hint">Subtotal:</div>
+            <div id="billSubtotal" style="font-weight:700">$0.00</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="small hint">Tax (5%):</div>
+            <div id="billTax">$0.00</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="small hint">Tip:</div>
+            <input id="tipInput" class="input" style="width:120px;padding:8px;font-size:13px" placeholder="$0.00" />
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="small hint">Total:</div>
+            <div id="billTotal" style="font-weight:900; color:var(--accent)">$0.00</div>
+          </div>
+
+          <div class="footer-actions">
+            <button id="saveBill" class="btn">Save Bill</button>
+            <button id="checkout" class="btn primary">Checkout</button>
+            <button id="closeBill" class="btn ghost">Close</button>
+          </div>
+        </div>
+
+      </aside>
     </div>
-
-    <div id="resultText">No rating yet</div>
-    <button id="newPersonBtn" style="display:none;">New Person</button>
-
-    <div id="ratingsList" class="results-list" style="display:none;">
-        <h3>All Ratings:</h3>
-        <div id="allRatings"></div>
-        <div class="average" id="averageRating"></div>
-    </div>
-</div>
+  </div>
 
 <script>
-    const stars = document.querySelectorAll('.star');
-    const resultText = document.getElementById('resultText');
-    const nameInput = document.getElementById('nameInput');
-    const newPersonBtn = document.getElementById('newPersonBtn');
-    const ratingsList = document.getElementById('ratingsList');
-    const allRatings = document.getElementById('allRatings');
-    const averageRating = document.getElementById('averageRating');
+/* =========================
+   Data & Persistence Setup
+   ========================= */
 
-    let ratingsData = [];
-    let selectedRating = 0;
+/*
+  Data shape:
+  - ratingsData: [{id, name, rating, ts}]
+  - billData: {water: 0, food: 0, custom: [{name, price, qty}], tip: 0}
+*/
+const STORAGE_KEY = 'dark_star_rating_v1';
 
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            selectedRating = parseInt(star.getAttribute('data-value'));
+let state = {
+  ratingsData: [],
+  billData: {
+    water: 0,
+    food: 0,
+    custom: [], // {id,name,price,qty}
+    tip: 0
+  }
+};
 
-            // Light up stars up to the clicked one
-            stars.forEach(s => s.classList.remove('lit'));
-            for (let i = 0; i < selectedRating; i++) {
-                stars[i].classList.add('lit');
-            }
-
-            // Display result
-            const name = nameInput.value.trim() || "Unnamed";
-            resultText.textContent = `${name} rated ${selectedRating} star${selectedRating > 1 ? 's' : ''}`;
-
-            // Save rating
-            ratingsData.push({ name, rating: selectedRating });
-
-            // Show New Person button
-            newPersonBtn.style.display = 'inline-block';
-
-            // If at least 2 ratings, show list
-            if (ratingsData.length >= 2) {
-                updateRatingsList();
-            }
-        });
-
-        star.addEventListener('mouseover', () => {
-            const hoverValue = parseInt(star.getAttribute('data-value'));
-            stars.forEach(s => s.classList.remove('lit'));
-            for (let i = 0; i < hoverValue; i++) {
-                stars[i].classList.add('lit');
-            }
-        });
-
-        star.addEventListener('mouseout', () => {
-            stars.forEach(s => s.classList.remove('lit'));
-            for (let i = 0; i < selectedRating; i++) {
-                stars[i].classList.add('lit');
-            }
-        });
-    });
-
-    newPersonBtn.addEventListener('click', () => {
-        nameInput.value = '';
-        resultText.textContent = 'No rating yet';
-        stars.forEach(s => s.classList.remove('lit'));
-        selectedRating = 0;
-        newPersonBtn.style.display = 'none';
-    });
-
-    function updateRatingsList() {
-        allRatings.innerHTML = '';
-        let total = 0;
-
-        ratingsData.forEach(entry => {
-            total += entry.rating;
-            const div = document.createElement('div');
-            div.classList.add('result-item');
-            div.textContent = `${entry.name}: ${entry.rating} ★`;
-            allRatings.appendChild(div);
-        });
-
-        let avg = (total / ratingsData.length).toFixed(2);
-        averageRating.textContent = `Average Rating: ${avg} ★`;
-        ratingsList.style.display = 'block';
+// load from localStorage if present
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+      // ensure arrays exist
+      state.ratingsData = state.ratingsData || [];
+      state.billData = state.billData || { water:0, food:0, custom:[], tip:0 };
     }
-</script>
+  } catch(e){
+    console.warn('Could not parse saved state', e);
+  }
+}
+loadState();
 
+/* =========================
+   UI refs
+   ========================= */
+const nameInput = document.getElementById('nameInput');
+const starsEl = document.getElementById('stars');
+const starNodes = Array.from(document.querySelectorAll('.star'));
+const pendingHint = document.getElementById('pendingHint');
+const submitRatingBtn = document.getElementById('submitRatingBtn');
+const newPersonBtn = document.getElementById('newPersonBtn');
+const clearPendingBtn = document.getElementById('clearPendingBtn');
+const randomRateBtn = document.getElementById('randomRateBtn');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+const ratingsListEl = document.getElementById('ratingsList');
+const emptyHint = document.getElementById('emptyHint');
+const openBillBtn = document.getElementById('openBillBtn');
+const billPanel = document.getElementById('billPanel');
+
+const avgNum = document.getElementById('avgNum');
+const medianNum = document.getElementById('medianNum');
+const countNum = document.getElementById('countNum');
+
+const exportCsv = document.getElementById('exportCsv');
+const resetAll = document.getElementById('resetAll');
+const sortByRating = document.getElementById('sortByRating');
+const clearListBtn = document.getElementById('clearListBtn');
+
+const copyJsonBtn = copyLinkBtn;
+
+const openBillButton = document.getElementById('openBillBtn');
+const closeBillBtn = document.getElementById('closeBill');
+const saveBillBtn = document.getElementById('saveBill');
+const checkoutBtn = document.getElementById('checkout');
+
+const waterQtyEl = document.getElementById('waterQty');
+const foodQtyEl = document.getElementById('foodQty');
+const billSubtotal = document.getElementById('billSubtotal');
+const billTax = document.getElementById('billTax');
+const billTotal = document.getElementById('billTotal');
+const tipInput = document.getElementById('tipInput');
+const addCustomItemBtn = document.getElementById('addCustomItem');
+const customArea = document.getElementById('customArea');
+const customName = document.getElementById('customName');
+const customPrice = document.getElementById('customPrice');
+const addCustomConfirm = document.getElementById('addCustomConfirm');
+
+/* =========================
+   App Logic: Rating (Pending) behavior
+   ========================= */
+
+/* pending rating (not in ratingsData until Submit) */
+let pending = {
+  rating: 0,
+  name: ''
+};
+
+/* helpers */
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.warn('Failed to save state', e);
+  }
+}
+
+/* UI update of star visuals for a given value */
+function renderStars(value){
+  starNodes.forEach((s, idx) => {
+    const val = idx + 1;
+    if(val <= value) {
+      s.classList.add('lit');
+      s.setAttribute('aria-checked','true');
+    } else {
+      s.classList.remove('lit');
+      s.setAttribute('aria-checked','false');
+    }
+  });
+  pendingHint.textContent = value ? `Pending: ${value} star${value>1?'s':''}` : 'No pending rating';
+}
+
+/* click handler for stars - updates pending rating (does NOT save) */
+starNodes.forEach(s => {
+  s.addEventListener('click', (ev) => {
+    const v = Number(s.dataset.value)||0;
+    pending.rating = v;
+    renderStars(v);
+  });
+});
+
+/* keyboard support for stars container */
+starsEl.addEventListener('keydown', (ev) => {
+  if(ev.key === 'ArrowRight' || ev.key === 'ArrowUp'){
+    pending.rating = Math.min(5, (pending.rating||0) + 1);
+    renderStars(pending.rating);
+    ev.preventDefault();
+  } else if(ev.key === 'ArrowLeft' || ev.key === 'ArrowDown'){
+    pending.rating = Math.max(0, (pending.rating||0) - 1);
+    renderStars(pending.rating);
+    ev.preventDefault();
+  } else if(ev.key === 'Enter'){
+    // quick submit on Enter
+    submitCurrentRating();
+    ev.preventDefault();
+  }
+});
+
+/* clear pending */
+clearPendingBtn.addEventListener('click', () => {
+  pending.rating = 0;
+  pending.name = '';
+  nameInput.value = '';
+  renderStars(0);
+  pendingHint.textContent = 'Cleared pending rating';
+});
+
+/* random rating fun */
+randomRateBtn.addEventListener('click', () => {
+  const rv = Math.floor(Math.random() * 5) + 1;
+  pending.rating = rv;
+  renderStars(rv);
+});
+
+/* copy JSON to clipboard for sharing */
+copyJsonBtn.addEventListener('click', async () => {
+  const json = JSON.stringify(state, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    pendingHint.textContent = 'State copied to clipboard';
+  }catch(e){
+    pendingHint.textContent = 'Copy failed — permission?';
+  }
+});
+
+/* =========================
+   Submit Rating & New Person logic
+   ========================= */
+
+/* Submit button: commit pending rating into ratingsData.
+   - If name empty, default to "Unnamed".
+   - If we are editing an existing id (editId set), update that entry.
+*/
+let editId = null;
+
+submitRatingBtn.addEventListener('click', () => {
+  submitCurrentRating();
+});
+
+function submitCurrentRating(){
+  const nameVal = nameInput.value.trim() || 'Unnamed';
+  const ratingVal = Number(pending.rating) || 0;
+  if(ratingVal < 1){
+    pendingHint.textContent = 'Select at least 1 star before submitting';
+    return;
+  }
+  if(editId){
+    // update existing rating
+    const idx = state.ratingsData.findIndex(r => r.id === editId);
+    if(idx >= 0){
+      state.ratingsData[idx].name = nameVal;
+      state.ratingsData[idx].rating = ratingVal;
+      state.ratingsData[idx].ts = Date.now();
+      editId = null;
+      newPersonBtn.style.display = 'inline-block';
+      pendingHint.textContent = `Updated entry: ${nameVal} → ${ratingVal}★`;
+    } else {
+      // fallback: push as new
+      state.ratingsData.push({ id: generateId(), name: nameVal, rating: ratingVal, ts: Date.now() });
+      pendingHint.textContent = `Saved: ${nameVal} → ${ratingVal}★`;
+      newPersonBtn.style.display = 'inline-block';
+    }
+  } else {
+    // add new
+    state.ratingsData.push({ id: generateId(), name: nameVal, rating: ratingVal, ts: Date.now() });
+    pendingHint.textContent = `Saved: ${nameVal} → ${ratingVal}★`;
+    newPersonBtn.style.display = 'inline-block';
+  }
+
+  // reset pending but keep name visible if needed
+  pending.rating = 0;
+  pending.name = '';
+  renderStars(0);
+  saveState();
+  refreshListUI();
+  updateStatsUI();
+  maybeEnableBill();
+}
+
+/* New Person button: reset form for next person (does not modify saved ratings) */
+newPersonBtn.addEventListener('click', () => {
+  nameInput.value = '';
+  pending.rating = 0;
+  editId = null;
+  renderStars(0);
+  pendingHint.textContent = 'Ready for next person';
+  newPersonBtn.style.display = 'none';
+});
+
+/* =========================
+   Ratings List UI & actions
+   ========================= */
+
+function refreshListUI(){
+  // clear old
+  ratingsListEl.innerHTML = '';
+
+  if(state.ratingsData.length === 0){
+    emptyHint.style.display = 'flex';
+    ratingsListEl.appendChild(emptyHint);
+  } else {
+    emptyHint.style.display = 'none';
+  }
+
+  // sort by timestamp by default (newest first)
+  const arr = state.ratingsData.slice().sort((a,b) => b.ts - a.ts);
+
+  arr.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.setAttribute('data-id', entry.id);
+
+    const left = document.createElement('div');
+    left.className = 'left';
+
+    const avatar = document.createElement('div');
+    avatar.style.width = '46px';
+    avatar.style.height = '46px';
+    avatar.style.borderRadius = '8px';
+    avatar.style.background = 'linear-gradient(135deg,#111,#1a1a1a)';
+    avatar.style.display = 'grid';
+    avatar.style.placeItems = 'center';
+    avatar.style.fontWeight = '700';
+    avatar.style.color = 'var(--accent)';
+    avatar.textContent = entry.name.charAt(0).toUpperCase();
+
+    const nameWrap = document.createElement('div');
+    nameWrap.style.minWidth = '160px';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.textContent = entry.name;
+    nameEl.style.cursor = 'pointer';
+    nameEl.title = 'Click to load into form for quick edit';
+    nameEl.addEventListener('click', () => {
+      // load into form for editing
+      nameInput.value = entry.name;
+      pending.rating = entry.rating;
+      renderStars(entry.rating);
+      editId = entry.id;
+      newPersonBtn.style.display = 'inline-block';
+      pendingHint.textContent = `Editing ${entry.name} — change stars then Submit`;
+    });
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const date = new Date(entry.ts);
+    meta.textContent = `${entry.rating} ★ • ${date.toLocaleString()}`;
+
+    nameWrap.appendChild(nameEl);
+    nameWrap.appendChild(meta);
+
+    left.appendChild(avatar);
+    left.appendChild(nameWrap);
+
+    const right = document.createElement('div');
+    right.className = 'controls';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit';
+    editBtn.addEventListener('click', () => {
+      nameInput.value = entry.name;
+      pending.rating = entry.rating;
+      renderStars(entry.rating);
+      editId = entry.id;
+      pendingHint.textContent = `Editing ${entry.name}`;
+      newPersonBtn.style.display = 'inline-block';
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.textContent = '🗑';
+    delBtn.title = 'Delete';
+    delBtn.addEventListener('click', () => {
+      if(confirm(`Delete "${entry.name}" (${entry.rating}★)?`)){
+        state.ratingsData = state.ratingsData.filter(r => r.id !== entry.id);
+        saveState();
+        refreshListUI();
+        updateStatsUI();
+        maybeEnableBill();
+      }
+    });
+
+    right.appendChild(editBtn);
+    right.appendChild(delBtn);
+
+    item.appendChild(left);
+    item.appendChild(right);
+
+    ratingsListEl.appendChild(item);
+  });
+}
+
+/* =========================
+   Stats calculation (avg, median, count)
+   ========================= */
+
+function updateStatsUI(){
+  const arr = state.ratingsData.map(r => r.rating);
+  const count = arr.length;
+  countNum.textContent = count;
+  if(count === 0){
+    avgNum.textContent = '-';
+    medianNum.textContent = '-';
+    return;
+  }
+  const sum = arr.reduce((a,b)=>a+b,0);
+  const avg = (sum/count);
+  avgNum.textContent = avg.toFixed(2) + ' ★';
+
+  // median
+  const sorted = arr.slice().sort((a,b)=>a-b);
+  let median;
+  if(sorted.length % 2 === 1) median = sorted[(sorted.length-1)/2];
+  else median = (sorted[sorted.length/2 -1] + sorted[sorted.length/2]) / 2;
+  medianNum.textContent = (Math.round(median*100)/100) + ' ★';
+}
+
+/* =========================
+   Sorting / Export / Reset
+   ========================= */
+
+let sortDir = 'desc'; // desc by default
+
+sortByRating.addEventListener('click', () => {
+  if(sortDir === 'desc') {
+    state.ratingsData.sort((a,b) => a.rating - b.rating);
+    sortDir = 'asc';
+    sortByRating.textContent = 'Sort ↑';
+  } else {
+    state.ratingsData.sort((a,b) => b.rating - a.rating);
+    sortDir = 'desc';
+    sortByRating.textContent = 'Sort ↓';
+  }
+  saveState();
+  refreshListUI();
+});
+
+/* export CSV helper */
+exportCsv.addEventListener('click', () => {
+  if(state.ratingsData.length === 0) return alert('No ratings to export.');
+  const rows = [['id','name','rating','ts']];
+  state.ratingsData.forEach(r => rows.push([r.id, r.name, r.rating, new Date(r.ts).toISOString()]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ratings.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* Reset ALL data */
+resetAll.addEventListener('click', () => {
+  if(!confirm('Reset everything? This clears ratings and bill.')) return;
+  state.ratingsData = [];
+  state.billData = { water:0, food:0, custom:[], tip:0 };
+  saveState();
+  refreshListUI();
+  updateStatsUI();
+  syncBillUI();
+  maybeEnableBill();
+});
+
+/* Clear list only */
+clearListBtn.addEventListener('click', () => {
+  if(!confirm('Clear ratings list?')) return;
+  state.ratingsData = [];
+  saveState();
+  refreshListUI();
+  updateStatsUI();
+  maybeEnableBill();
+});
+
+/* =========================
+   Utility helpers
+   ========================= */
+function generateId() {
+  return 'id_' + Math.random().toString(36).slice(2,9);
+}
+
+/* =========================
+   Bill Panel Logic
+   ========================= */
+
+function maybeEnableBill(){
+  if(state.ratingsData.length >= 3){
+    openBillButton.style.display = 'inline-block';
+  } else {
+    openBillButton.style.display = 'none';
+    // also hide bill if open
+    if(billPanel.style.display !== 'none'){
+      billPanel.style.display = 'none';
+    }
+  }
+}
+
+/* Sync bill UI with state */
+function syncBillUI(){
+  const bd = state.billData;
+  waterQtyEl.textContent = bd.water || 0;
+  foodQtyEl.textContent = bd.food || 0;
+
+  // custom items area (clear previous)
+  // remove existing custom rows except the two default rows
+  // We'll render any custom items below water/food
+  const customContainer = document.createElement('div');
+  // find existing custom rows and remove them
+  const existingCustom = Array.from(document.querySelectorAll('.bill-row.custom'));
+  existingCustom.forEach(n => n.remove());
+
+  // Insert custom rows after the default ones
+  const billItems = document.getElementById('billItems');
+
+  // For each custom item in state, append a row
+  bd.custom = bd.custom || [];
+  bd.custom.forEach(ci => {
+    const row = document.createElement('div');
+    row.className = 'bill-row custom';
+    row.setAttribute('data-custom-id', ci.id);
+
+    const info = document.createElement('div');
+    info.className = 'info';
+    const emojiDiv = document.createElement('div');
+    emojiDiv.style.fontSize = '20px';
+    emojiDiv.textContent = '🛒';
+    const nameDiv = document.createElement('div');
+    nameDiv.innerHTML = `<div style="font-weight:700">${ci.name}</div><div class="small-ghost small">$${Number(ci.price).toFixed(2)} each</div>`;
+    info.appendChild(emojiDiv);
+    info.appendChild(nameDiv);
+
+    const qtyControls = document.createElement('div');
+    qtyControls.className = 'qty-controls';
+    const dec = document.createElement('button');
+    dec.className = 'icon-btn';
+    dec.textContent = '−';
+    dec.addEventListener('click', () => {
+      if(ci.qty > 0) ci.qty--;
+      saveState();
+      syncBillUI();
+    });
+    const qtyDisplay = document.createElement('div');
+    qtyDisplay.style.minWidth = '28px';
+    qtyDisplay.style.textAlign = 'center';
+    qtyDisplay.textContent = ci.qty;
+    const inc = document.createElement('button');
+    inc.className = 'icon-btn';
+    inc.textContent = '+';
+    inc.addEventListener('click', () => {
+      ci.qty++;
+      saveState();
+      syncBillUI();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'icon-btn';
+    del.textContent = '🗑';
+    del.title = 'Remove custom item';
+    del.addEventListener('click', () => {
+      if(confirm(`Remove custom item "${ci.name}"?`)){
+        state.billData.custom = state.billData.custom.filter(x => x.id !== ci.id);
+        saveState();
+        syncBillUI();
+      }
+    });
+
+    qtyControls.appendChild(dec);
+    qtyControls.appendChild(qtyDisplay);
+    qtyControls.appendChild(inc);
+    qtyControls.appendChild(del);
+
+    row.appendChild(info);
+    row.appendChild(qtyControls);
+
+    billItems.appendChild(row);
+  });
+
+  // Calculate totals
+  const waterPrice = 1.00;
+  const foodPrice = 2.00;
+  let subtotal = (bd.water || 0) * waterPrice + (bd.food || 0) * foodPrice;
+  bd.custom.forEach(ci => {
+    subtotal += (Number(ci.price) || 0) * (ci.qty || 0);
+  });
+
+  const tax = subtotal * 0.05;
+  const tipVal = Number(bd.tip) || 0;
+  const total = subtotal + tax + tipVal;
+
+  billSubtotal.textContent = '$' + subtotal.toFixed(2);
+  billTax.textContent = '$' + tax.toFixed(2);
+  billTotal.textContent = '$' + total.toFixed(2);
+
+  // update tip input
+  tipInput.value = bd.tip ? Number(bd.tip).toFixed(2) : '';
+}
+
+/* bill increment/decrement for water/food */
+document.querySelectorAll('.icon-btn[data-item]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    const item = btn.dataset.item;
+    if(item === 'water'){
+      if(action === 'inc') state.billData.water = (state.billData.water || 0) + 1;
+      else state.billData.water = Math.max(0, (state.billData.water || 0) - 1);
+    } else if(item === 'food'){
+      if(action === 'inc') state.billData.food = (state.billData.food || 0) + 1;
+      else state.billData.food = Math.max(0, (state.billData.food || 0) - 1);
+    }
+    saveState();
+    syncBillUI();
+  });
+});
+
+/* open bill button */
+openBillButton.addEventListener('click', () => {
+  billPanel.style.display = 'flex';
+  syncBillUI();
+});
+
+/* close bill */
+closeBillBtn.addEventListener('click', () => {
+  billPanel.style.display = 'none';
+});
+
+/* add custom item toggle */
+addCustomItemBtn.addEventListener('click', () => {
+  customArea.style.display = customArea.style.display === 'none' ? 'flex' : 'none';
+});
+
+/* confirm add custom item */
+addCustomConfirm.addEventListener('click', () => {
+  const name = customName.value.trim();
+  const price = parseFloat(customPrice.value);
+  if(!name || isNaN(price) || price <= 0){
+    alert('Provide valid name and price for custom item.');
+    return;
+  }
+  const id = generateId();
+  state.billData.custom.push({ id, name, price: Number(price), qty: 1 });
+  customName.value = '';
+  customPrice.value = '';
+  saveState();
+  syncBillUI();
+});
+
+/* tip input binding */
+tipInput.addEventListener('change', () => {
+  const val = parseFloat(tipInput.value);
+  state.billData.tip = isNaN(val) ? 0 : val;
+  saveState();
+  syncBillUI();
+});
+
+/* save bill action */
+saveBillBtn.addEventListener('click', () => {
+  saveState();
+  alert('Bill saved to localStorage.');
+});
+
+/* checkout: simple behaviour -> show receipt and clear bill */
+checkoutBtn.addEventListener('click', () => {
+  const bd = state.billData;
+  const subtotal = parseFloat(billSubtotal.textContent.replace('$','')) || 0;
+  if(subtotal <= 0 && (!bd.tip || bd.tip === 0)){
+    if(!confirm('Checkout with $0 total?')) return;
+  }
+  // build receipt summary
+  let receipt = 'Receipt\n\n';
+  receipt += `Water 🥤 x ${bd.water || 0}\n`;
+  receipt += `Food 🍔 x ${bd.food || 0}\n`;
+  bd.custom.forEach(ci => receipt += `${ci.name} x ${ci.qty} @ $${ci.price.toFixed(2)}\n`);
+  const tax = parseFloat(billTax.textContent.replace('$','')) || 0;
+  const total = parseFloat(billTotal.textContent.replace('$','')) || 0;
+  receipt += `\nTax: $${tax.toFixed(2)}\n`;
+  receipt += `Tip: $${Number(bd.tip||0).toFixed(2)}\n`;
+  receipt += `Total: $${total.toFixed(2)}\n\n`;
+  receipt += 'Thanks for using Star Rating App';
+
+  alert(receipt);
+
+  // clear bill
+  state.billData = { water:0, food:0, custom:[], tip:0 };
+  saveState();
+  syncBillUI();
+  billPanel.style.display = 'none';
+});
+
+/* Save tip on Enter in tip input */
+tipInput.addEventListener('keydown', (ev) => {
+  if(ev.key === 'Enter'){
+    tipInput.blur();
+  }
+});
+
+/* =========================
+   Initialize + helpers
+   ========================= */
+
+function initialize(){
+  refreshListUI();
+  updateStatsUI();
+  maybeEnableBill();
+  syncBillUI();
+  // show if persisted
+  document.getElementById('persistHint').textContent = localStorage.getItem(STORAGE_KEY) ? 'Yes' : 'No';
+}
+
+/* sync initial data if any */
+initialize();
+
+/* =========================
+   Extra: Auto-save after edits (watch for list changes)
+   ========================= */
+
+/* MutationObserver to keep custom rows in sync (not strictly necessary, but helps) */
+const mo = new MutationObserver(() => {
+  // ensure totals up to date
+  syncBillUI();
+});
+mo.observe(document.getElementById('billItems'), { childList: true, subtree: true });
+
+/* End of script */
+</script>
 </body>
 </html>
