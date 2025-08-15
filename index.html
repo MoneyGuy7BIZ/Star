@@ -3,1110 +3,682 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Full Page Dark Star Rating App (With Billing)</title>
+<title>Green/Black Network Flow — Loading → WiFi → IP Confirm → Upload → Success</title>
 <style>
-/* =========================
-   Global / Layout Styling
-   ========================= */
+  /* =======================================================================
+     GLOBAL RESET + THEME
+     ======================================================================= */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
 
-:root{
-  --bg:#0e0e10;
-  --card:#161618;
-  --muted:#9aa0a6;
-  --accent:#00ff7a;
-  --gold:#ffd166;
-  --glass: rgba(255,255,255,0.03);
-  --danger:#ff5c7a;
-  --panel:#141416;
-  --soft:#222225;
-}
+  body {
+    background: #000;                 /* Pure black background */
+    color: #39ff14;                   /* Bright neon green text color */
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    overflow: hidden;                 /* Prevent default scroll */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+  }
 
-/* Reset-ish */
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#070708 0%, #0f1112 100%); color:#e8eef1;}
+  /* =======================================================================
+     APP CONTAINER
+     ======================================================================= */
+  #app {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: block;
+    background: radial-gradient(1200px 600px at 50% 20%, rgba(57,255,20,0.08), transparent 60%),
+                radial-gradient(1000px 500px at 80% 80%, rgba(57,255,20,0.06), transparent 60%),
+                #000;
+  }
 
-/* Make the app take most of the page */
-.app {
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:32px;
-  gap:24px;
-}
+  /* Subtle grid glow backdrop (no “steps” text anywhere) */
+  #grid {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(transparent 29px, rgba(57,255,20,0.08) 30px, transparent 31px) 0 0 / 100% 30px,
+      linear-gradient(90deg, transparent 29px, rgba(57,255,20,0.08) 30px, transparent 31px) 0 0 / 30px 100%;
+    mask-image: radial-gradient(80% 60% at 50% 50%, #000 65%, transparent);
+    opacity: 0.35;
+    pointer-events: none;
+  }
 
-/* Main container: big "card" that covers most width on large screens */
-.container {
-  width:100%;
-  max-width:1200px;
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:14px;
-  padding:20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-  display:grid;
-  grid-template-columns: 1fr 420px;
-  gap:20px;
-  align-items:start;
-}
+  /* =======================================================================
+     PAGES
+     ======================================================================= */
+  .page {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 18px;
+  }
+  .page.active { display: flex; }
 
-/* On small screens stack */
-@media (max-width:900px){
-  .container{grid-template-columns:1fr; padding:16px;}
-}
+  /* Headings */
+  h1, h2, h3 {
+    margin: 0;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 10px #39ff14, 0 0 22px rgba(57,255,20,0.8);
+    font-weight: 900;
+  }
+  h1 { font-size: clamp(28px, 4vw, 46px); }
+  h2 { font-size: clamp(22px, 3vw, 34px); }
+  h3 { font-size: clamp(18px, 2.4vw, 24px); font-weight: 800; }
 
-/* Left panel: rating form big and centered */
-.left {
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));
-  border-radius:10px;
-  padding:24px;
-  min-height:480px;
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-}
+  p {
+    margin: 2px 0 0 0;
+    font-size: clamp(14px, 2.2vw, 18px);
+    letter-spacing: 0.04em;
+    opacity: 0.95;
+  }
 
-/* Right panel: ratings list + bill */
-.right {
-  background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
-  border-radius:10px;
-  padding:20px;
-  min-height:480px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
+  /* Buttons */
+  .btn-row { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
+  button {
+    background: rgba(0,0,0,0.4);
+    color: #39ff14;
+    border: 2px solid #39ff14;
+    border-radius: 14px;
+    padding: 10px 18px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+    text-shadow: 0 0 8px rgba(57,255,20,0.8);
+  }
+  button:hover {
+    background: #39ff14;
+    color: #000;
+    box-shadow: 0 0 16px #39ff14, inset 0 0 6px rgba(0,0,0,0.6);
+  }
+  button:active { transform: translateY(1px) scale(0.98); }
 
-/* Header */
-.title {
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-.logo {
-  width:48px;
-  height:48px;
-  border-radius:10px;
-  background:linear-gradient(135deg,#09121b,#06212c);
-  display:grid;
-  place-items:center;
-  font-weight:700;
-  color:var(--accent);
-  font-size:20px;
-  box-shadow:0 6px 18px rgba(0,0,0,0.5), inset 0 -4px 12px rgba(255,255,255,0.02);
-}
-.h1 {font-size:20px;margin:0}
-.h2 {font-size:13px;color:var(--muted);margin:0}
+  /* Cards/panels */
+  .panel {
+    background: linear-gradient(180deg, rgba(7,27,5,0.8), rgba(7,27,5,0.42));
+    border: 1px solid rgba(57,255,20,0.35);
+    box-shadow: 0 0 24px rgba(57,255,20,0.15), inset 0 0 10px rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+    border-radius: 18px;
+    padding: 18px 22px;
+  }
 
-/* Input row */
-.row {
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
+  /* =======================================================================
+     CIRCULAR PROGRESS (LOADING + UPLOADING)
+     ======================================================================= */
+  .circle-wrap {
+    width: clamp(160px, 24vw, 220px);
+    height: clamp(160px, 24vw, 220px);
+    position: relative;
+    display: inline-block;
+  }
+  .circle {
+    width: 100%; height: 100%;
+  }
+  .circle .bg {
+    fill: none;
+    stroke: #0a2900;
+    stroke-width: 14;
+  }
+  .circle .fg {
+    fill: none;
+    stroke: #39ff14;
+    stroke-width: 14;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 10px #39ff14);
+    transition: stroke-dashoffset 0.2s ease;
+  }
+  .circle-label {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 1000;
+    text-shadow: 0 0 10px #39ff14;
+    font-size: clamp(30px, 5.5vw, 48px);
+  }
 
-/* Name input */
-.input {
-  flex:1;
-  background:var(--soft);
-  border-radius:8px;
-  padding:12px 14px;
-  border:1px solid rgba(255,255,255,0.03);
-  color:inherit;
-  font-size:16px;
-  outline:none;
-}
+  /* =======================================================================
+     WIFI ICON (Connected)
+     ======================================================================= */
+  .wifi {
+    width: clamp(84px, 10vw, 120px);
+    height: auto;
+    margin-bottom: 6px;
+    filter: drop-shadow(0 0 10px #39ff14);
+  }
+  .wifi .arc { fill: none; stroke: #39ff14; stroke-width: 6; }
+  .wifi .dot { fill: #39ff14; }
 
-/* Big star area */
-.star-area {
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:center;
-  padding:12px;
-  background:linear-gradient(180deg, rgba(255,255,255,0.005), rgba(255,255,255,0.01));
-  border-radius:8px;
-}
-.stars {
-  display:flex;
-  gap:10px;
-  font-size:54px;
-  user-select:none;
-  cursor:pointer;
-}
-.star {
-  transition: transform .12s ease, color .12s ease, text-shadow .12s ease;
-  color: #2f3336; /* dark when unlit */
-  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
-}
-.star:hover { transform: translateY(-6px) scale(1.06); }
-.star.lit { color:var(--gold); text-shadow: 0 6px 18px rgba(255,200,60,0.08); }
+  /* =======================================================================
+     IP + SPEED CONFIRM
+     ======================================================================= */
+  .mono {
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  .ip {
+    font-size: clamp(20px, 3.6vw, 36px);
+    letter-spacing: 0.08em;
+    font-weight: 1000;
+    text-shadow: 0 0 10px #39ff14, 0 0 20px rgba(57,255,20,0.6);
+  }
+  .speeds {
+    font-size: clamp(14px, 2.5vw, 20px);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    opacity: 0.95;
+  }
+  .confirm-question {
+    font-size: clamp(16px, 2.6vw, 22px);
+    font-weight: 900;
+    margin-top: 6px;
+  }
 
-/* Buttons row */
-.buttons {
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
-}
-.btn {
-  padding:10px 14px;
-  border-radius:8px;
-  font-weight:600;
-  border:1px solid rgba(255,255,255,0.03);
-  cursor:pointer;
-  background:var(--panel);
-  color:inherit;
-}
-.btn.primary { background: linear-gradient(90deg,#0f6f54,#00d27a); color:#041209; }
-.btn.ghost { background:transparent; border:1px dashed rgba(255,255,255,0.03); color:var(--muted); }
-.btn.warn { background:linear-gradient(90deg,#7a2b2b,#ff5c7a); color:white; }
+  /* =======================================================================
+     UPLOADING
+     ======================================================================= */
+  .uploading-title {
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 1000;
+    letter-spacing: 0.12em;
+  }
+  .dots {
+    animation: blink 1.4s infinite steps(2, end);
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
 
-/* Result text */
-.result {
-  text-align:center;
-  color:var(--muted);
-  font-size:15px;
-}
+  /* =======================================================================
+     SUCCESS + WORLD MAP
+     ======================================================================= */
+  .success-title { font-size: clamp(28px, 4vw, 48px); }
+  .success-subtitle { font-size: clamp(16px, 2.4vw, 22px); opacity: 0.95; }
+  .server-name {
+    font-size: clamp(20px, 3.2vw, 34px);
+    font-weight: 1000;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 10px #39ff14, 0 0 20px rgba(57,255,20,0.75);
+  }
 
-/* Ratings list */
-.list {
-  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));
-  border-radius:8px;
-  padding:14px;
-  overflow:auto;
-  max-height:260px;
-  border:1px solid rgba(255,255,255,0.02);
-}
-.list .item {
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  padding:8px 6px;
-  border-bottom:1px dashed rgba(255,255,255,0.02);
-  align-items:center;
-}
-.list .item:last-child{border-bottom:0}
-.item .left {display:flex; gap:12px; align-items:center}
-.item .name {font-weight:600}
-.item .meta {color:var(--muted); font-size:13px}
+  .map-wrap {
+    width: min(1000px, 92vw);
+    margin-inline: auto;
+    margin-top: 8px;
+  }
+  .world-map {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 0 14px rgba(57,255,20,0.5));
+  }
+  .map-bg {
+    fill: #000;
+  }
+  .land {
+    fill: #0a2900;
+    stroke: #39ff14;
+    stroke-width: 0.65;
+    opacity: 0.88;
+  }
+  .server-dot {
+    fill: #39ff14;
+    opacity: 0.92;
+    filter: drop-shadow(0 0 6px #39ff14);
+  }
+  .server-label {
+    font: 700 11px/1 ui-monospace, "Source Code Pro", Menlo, Consolas, monospace;
+    fill: #39ff14;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,0.8);
+    stroke-width: 2px;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
 
-/* Small controls inside list item */
-.item .controls {display:flex; gap:8px}
-.icon-btn {
-  padding:6px 8px;
-  border-radius:6px;
-  background:transparent;
-  border:1px solid rgba(255,255,255,0.02);
-  cursor:pointer;
-  color:var(--muted);
-}
-.icon-btn:hover{color:var(--accent); transform:translateY(-2px)}
+  /* =======================================================================
+     FLOATING CHROME (non-intrusive, decorative)
+     ======================================================================= */
+  .chrome {
+    position: absolute;
+    inset: 16px 16px auto auto;
+    display: flex; gap: 8px;
+    z-index: 3;
+  }
+  .chip {
+    padding: 6px 10px;
+    border: 1px solid rgba(57,255,20,0.4);
+    background: linear-gradient(180deg, rgba(7,27,5,0.7), rgba(7,27,5,0.28));
+    border-radius: 999px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 6px rgba(57,255,20,0.7);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.6), 0 0 12px rgba(57,255,20,0.2);
+  }
 
-/* Stats box */
-.stats {
-  padding:10px;
-  border-radius:8px;
-  background:linear-gradient(180deg, rgba(255,255,255,0.006), rgba(255,255,255,0.01));
-  display:flex;
-  gap:12px;
-  justify-content:space-between;
-  align-items:center;
-}
-.stat {
-  text-align:center;
-  flex:1;
-}
-.stat .num {font-size:18px; font-weight:700; color:var(--accent)}
-.small { font-size:12px; color:var(--muted) }
-
-/* Bill Panel */
-.bill {
-  border-radius:8px;
-  background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(255,255,255,0.01));
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.bill .items {display:flex; gap:8px; flex-direction:column}
-.bill-row {display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px; border-radius:6px;}
-.bill-row .info {display:flex; gap:10px; align-items:center}
-.qty-controls {display:flex; gap:6px; align-items:center}
-.small-ghost {background:transparent; border:1px solid rgba(255,255,255,0.02); padding:6px 8px; border-radius:6px}
-
-/* Footer actions */
-.footer-actions {display:flex; gap:8px; justify-content:flex-end; align-items:center}
-.note {color:var(--muted); font-size:13px;}
-
-/* Tiny helpers */
-.hidden { display:none; }
-.center { display:flex; align-items:center; justify-content:center; gap:8px; }
-
-/* Tooltip-ish */
-.hint { font-size:12px; color:var(--muted); }
-
+  /* Responsive helpers */
+  @media (max-width: 540px) {
+    .btn-row { gap: 12px; }
+    .panel { padding: 14px 16px; }
+  }
 </style>
 </head>
 <body>
-  <div class="app">
-    <div class="container" role="application" aria-label="Star Rating App">
-      <!-- LEFT: Main rating section -->
-      <section class="left" aria-label="Rating Section">
-        <div class="title">
-          <div class="logo">★RD</div>
-          <div>
-            <h3 class="h1">Full Page Dark Star Rating</h3>
-            <p class="h2">Type a name, pick stars, submit. Add many people & build a bill after 3 people.</p>
-          </div>
-        </div>
+<div id="app" role="application" aria-label="Network connection flow">
+  <div id="grid" aria-hidden="true"></div>
 
-        <!-- Name input -->
-        <div class="row" style="margin-top:6px;">
-          <input id="nameInput" class="input" placeholder="Enter name to rate (person/product)..." aria-label="Name to rate" />
-          <button id="submitRatingBtn" class="btn primary" title="Submit rating">Submit</button>
-          <button id="newPersonBtn" class="btn ghost" title="Reset for a new person" style="display:none">New Person</button>
-        </div>
-
-        <!-- Star area -->
-        <div class="star-area" aria-hidden="false">
-          <div style="display:flex; width:100%; justify-content:space-between; align-items:center;">
-            <div style="display:flex; flex-direction:column;">
-              <div style="font-size:13px;color:var(--muted)">Pick rating (click or use ← →)</div>
-              <div class="result hint" id="pendingHint">No pending rating</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="small hint">Persisted: <span id="persistHint">Yes</span></div>
-            </div>
-          </div>
-
-          <div class="stars" id="stars" tabindex="0" role="radiogroup" aria-label="5 star rating">
-            <span class="star" data-value="1" role="radio" aria-checked="false" aria-label="1 star">★</span>
-            <span class="star" data-value="2" role="radio" aria-checked="false" aria-label="2 stars">★</span>
-            <span class="star" data-value="3" role="radio" aria-checked="false" aria-label="3 stars">★</span>
-            <span class="star" data-value="4" role="radio" aria-checked="false" aria-label="4 stars">★</span>
-            <span class="star" data-value="5" role="radio" aria-checked="false" aria-label="5 stars">★</span>
-          </div>
-
-          <!-- Extra controls: keyboard / clear -->
-          <div class="buttons" style="margin-top:6px;">
-            <button id="clearPendingBtn" class="btn">Clear</button>
-            <button id="randomRateBtn" class="btn">Random</button>
-            <button id="copyLinkBtn" class="btn ghost" title="Copy state to clipboard">Copy JSON</button>
-          </div>
-        </div>
-
-        <!-- Misc actions -->
-        <div style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
-          <div class="note">Tip: Click a star to choose, then press <strong>Submit</strong>. Edit ratings from the list.</div>
-          <div style="display:flex; gap:8px;">
-            <button id="exportCsv" class="btn ghost">Export CSV</button>
-            <button id="resetAll" class="btn warn">Reset All</button>
-          </div>
-        </div>
-
-        <!-- Big visual summary -->
-        <div class="stats" style="margin-top:8px;">
-          <div class="stat">
-            <div class="small">Average</div>
-            <div class="num" id="avgNum">—</div>
-          </div>
-          <div class="stat">
-            <div class="small">Median</div>
-            <div class="num" id="medianNum">—</div>
-          </div>
-          <div class="stat">
-            <div class="small">Count</div>
-            <div class="num" id="countNum">0</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- RIGHT: Ratings list + Bill -->
-      <aside class="right" aria-label="Ratings & Bill">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h4 style="margin:0">All Ratings</h4>
-            <div class="small hint">Show list, edit items, compute average live</div>
-          </div>
-          <div>
-            <button id="openBillBtn" class="btn primary" style="display:none">Open Bill 🧾</button>
-          </div>
-        </div>
-
-        <!-- List of ratings -->
-        <div class="list" id="ratingsList" role="list" aria-label="Ratings list">
-          <!-- items injected here -->
-          <div id="emptyHint" class="hint center">No ratings yet — submit one to start</div>
-        </div>
-
-        <!-- Actions for list -->
-        <div style="display:flex; gap:8px; justify-content:space-between; align-items:center;">
-          <div class="hint">You can edit or delete any entry. Click a name to load into form.</div>
-          <div style="display:flex; gap:8px;">
-            <button id="sortByRating" class="btn">Sort ↓</button>
-            <button id="clearListBtn" class="btn ghost">Clear List</button>
-          </div>
-        </div>
-
-        <!-- Bill panel -->
-        <div class="bill" id="billPanel" style="display:none">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong>Bill Builder</strong> <div class="small hint">Add items, set quantities, checkout</div>
-            </div>
-            <div class="small hint">After 3 ratings you can open this.</div>
-          </div>
-
-          <div class="items" id="billItems">
-            <!-- item rows -->
-            <div class="bill-row">
-              <div class="info">
-                <div style="font-size:20px">🥤</div>
-                <div>
-                  <div style="font-weight:700">Water</div>
-                  <div class="small-ghost small">$1.00 each</div>
-                </div>
-              </div>
-              <div class="qty-controls">
-                <button class="icon-btn" data-action="dec" data-item="water">−</button>
-                <div id="waterQty" style="min-width:28px; text-align:center">0</div>
-                <button class="icon-btn" data-action="inc" data-item="water">+</button>
-              </div>
-            </div>
-
-            <div class="bill-row">
-              <div class="info">
-                <div style="font-size:20px">🍔</div>
-                <div>
-                  <div style="font-weight:700">Food</div>
-                  <div class="small-ghost small">$2.00 each</div>
-                </div>
-              </div>
-              <div class="qty-controls">
-                <button class="icon-btn" data-action="dec" data-item="food">−</button>
-                <div id="foodQty" style="min-width:28px; text-align:center">0</div>
-                <button class="icon-btn" data-action="inc" data-item="food">+</button>
-              </div>
-            </div>
-
-            <div class="bill-row" style="display:flex; gap:8px; align-items:center; justify-content:space-between">
-              <div style="display:flex; gap:8px; align-items:center;">
-                <button id="addCustomItem" class="btn ghost">+ Custom Item</button>
-                <div class="hint">Add any item (name & price)</div>
-              </div>
-              <div id="customArea" style="display:none">
-                <input id="customName" placeholder="Name" class="input" style="width:140px;padding:6px;font-size:13px" />
-                <input id="customPrice" placeholder="Price" class="input" style="width:90px;padding:6px;font-size:13px" />
-                <button id="addCustomConfirm" class="btn">Add</button>
-              </div>
-            </div>
-
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="small hint">Subtotal:</div>
-            <div id="billSubtotal" style="font-weight:700">$0.00</div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="small hint">Tax (5%):</div>
-            <div id="billTax">$0.00</div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="small hint">Tip:</div>
-            <input id="tipInput" class="input" style="width:120px;padding:8px;font-size:13px" placeholder="$0.00" />
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="small hint">Total:</div>
-            <div id="billTotal" style="font-weight:900; color:var(--accent)">$0.00</div>
-          </div>
-
-          <div class="footer-actions">
-            <button id="saveBill" class="btn">Save Bill</button>
-            <button id="checkout" class="btn primary">Checkout</button>
-            <button id="closeBill" class="btn ghost">Close</button>
-          </div>
-        </div>
-
-      </aside>
-    </div>
+  <!-- Decorative small chrome -->
+  <div class="chrome" aria-hidden="true">
+    <div class="chip">GREENLINK</div>
+    <div class="chip">v2.0</div>
   </div>
 
+  <!-- ==============================================================
+       PAGE 1: LOADING (0 → 100% in ~10 seconds)
+       ============================================================== -->
+  <section id="page-loading" class="page active" role="region" aria-label="Initializing connection">
+    <div class="panel">
+      <div class="circle-wrap" aria-live="polite">
+        <svg class="circle" viewBox="0 0 160 160" role="img" aria-labelledby="loadingTitle">
+          <title id="loadingTitle">Loading progress indicator</title>
+          <circle class="bg" cx="80" cy="80" r="68"></circle>
+          <circle class="fg" cx="80" cy="80" r="68" stroke-dasharray="427.256" stroke-dashoffset="427.256"></circle>
+        </svg>
+        <div class="circle-label" id="loadingPct">0%</div>
+      </div>
+      <h2>Loading connection…</h2>
+      <p>Optimizing link parameters and synchronizing.</p>
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       PAGE 2: WIFI CONNECTED (brief pause, then proceed)
+       ============================================================== -->
+  <section id="page-wifi" class="page" role="region" aria-label="Wi‑Fi connected">
+    <svg class="wifi" viewBox="0 0 64 64" aria-hidden="true">
+      <path class="arc" d="M2 38a30 30 0 0 1 60 0"/>
+      <path class="arc" d="M10 46a22 22 0 0 1 44 0"/>
+      <path class="arc" d="M18 54a14 14 0 0 1 28 0"/>
+      <circle class="dot" cx="32" cy="60" r="4"/>
+    </svg>
+    <h1>Wi‑Fi Connected</h1>
+    <p>Link established. Signal healthy.</p>
+  </section>
+
+  <!-- ==============================================================
+       PAGE 3: IP + SPEED CONFIRM (Yes → Upload, No → Restart)
+       ============================================================== -->
+  <section id="page-ip" class="page" role="region" aria-label="Confirm IP and speeds">
+    <div class="panel">
+      <h2>Your IP Address</h2>
+      <div id="ipText" class="ip mono">0.0.0.0</div>
+      <div id="speedText" class="speeds mono">Download: -- Mbps  |  Upload: -- Mbps</div>
+      <div class="confirm-question">Is this correct?</div>
+      <div class="btn-row">
+        <button id="btnYes" aria-label="Confirm information">Yes</button>
+        <button id="btnNo" aria-label="This is not correct">No</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       PAGE 4: UPLOADING TO SERVERS
+       ============================================================== -->
+  <section id="page-upload" class="page" role="region" aria-label="Uploading to servers">
+    <div class="panel">
+      <h2 class="uploading-title">Uploading to servers<span class="dots">…</span></h2>
+      <div class="circle-wrap" aria-live="polite">
+        <svg class="circle" viewBox="0 0 160 160" role="img" aria-labelledby="uploadingTitle">
+          <title id="uploadingTitle">Upload progress indicator</title>
+          <circle class="bg" cx="80" cy="80" r="68"></circle>
+          <circle class="fg" cx="80" cy="80" r="68" stroke-dasharray="427.256" stroke-dashoffset="427.256"></circle>
+        </svg>
+        <div class="circle-label" id="uploadPct">0%</div>
+      </div>
+      <p>Encrypting payload and confirming receipt.</p>
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       PAGE 5: UPLOAD SUCCESSFUL + WORLD MAP + CITY NAME ABOVE
+       ============================================================== -->
+  <section id="page-success" class="page" role="region" aria-label="Upload successful">
+    <h1 class="success-title">Upload Successful</h1>
+    <h3 class="success-subtitle">Connected to server:</h3>
+    <div id="serverName" class="server-name" aria-live="polite">Loading…</div>
+
+    <div class="map-wrap panel" aria-hidden="false">
+      <!-- WORLD MAP SVG (stylized, single path landmass for aesthetics) -->
+      <svg class="world-map" viewBox="0 0 960 500" role="img" aria-labelledby="worldMapTitle">
+        <title id="worldMapTitle">World map with server markers</title>
+        <rect class="map-bg" width="960" height="500" rx="20" ry="20"/>
+
+        <!-- Landmass (stylized composite path for visual style — not geographic boundaries) -->
+        <g id="landGroup" opacity="0.98">
+          <path class="land" d="M88,308 L116,286 L144,268 L172,248 L206,226 L236,204 L256,188 L284,170 L304,158 L328,152 L352,150 L374,152 L396,158 L416,172 L436,192 L452,216 L468,242 L482,268 L496,298 L508,324 L520,348 L532,370 L548,392 L566,408 L588,420 L612,424 L636,420 L660,408 L684,388 L706,360 L726,328 L744,296 L760,264 L774,236 L788,210 L804,190 L824,174 L848,164 L872,162 L894,166 L914,176 L932,190 L948,206 L960,226 L960,500 L0,500 L0,370 L12,346 L24,328 L42,316 L62,310 Z" />
+          <!-- Extra island clusters for visual richness -->
+          <path class="land" d="M120,120 l26,-8 l18,12 l-10,18 l-22,-2 z"/>
+          <path class="land" d="M790,82 l28,-10 l20,10 l-8,22 l-26,2 z"/>
+          <path class="land" d="M440,98 l18,-10 l20,12 l-8,20 l-22,0 z"/>
+          <path class="land" d="M680,450 l22,-10 l24,14 l-10,18 l-28,0 z"/>
+        </g>
+
+        <!-- Server markers and labels will be injected here -->
+        <g id="serversLayer"></g>
+      </svg>
+    </div>
+
+    <div class="btn-row">
+      <button id="btnFinish">Finish</button>
+    </div>
+  </section>
+</div>
+
 <script>
-/* =========================
-   Data & Persistence Setup
-   ========================= */
+/* =============================================================================
+   JS CONTROLLER — Single‑file app logic.
+   Flow:
+     Loading (10s) → WiFi (brief pause) → IP Confirm (Yes/No)
+     Yes → Uploading (progress) → Success (random server displayed above map)
+     No  → Restart from Loading
+   ========================================================================== */
+(() => {
+  "use strict";
 
-/*
-  Data shape:
-  - ratingsData: [{id, name, rating, ts}]
-  - billData: {water: 0, food: 0, custom: [{name, price, qty}], tip: 0}
-*/
-const STORAGE_KEY = 'dark_star_rating_v1';
+  /* -------------------------------------------------------------------------
+     ELEMENT REFERENCES
+     ---------------------------------------------------------------------- */
+  const pages = {
+    loading: document.getElementById("page-loading"),
+    wifi:    document.getElementById("page-wifi"),
+    ip:      document.getElementById("page-ip"),
+    upload:  document.getElementById("page-upload"),
+    success: document.getElementById("page-success")
+  };
 
-let state = {
-  ratingsData: [],
-  billData: {
-    water: 0,
-    food: 0,
-    custom: [], // {id,name,price,qty}
-    tip: 0
-  }
-};
+  // Circular progress elements (loading & uploading)
+  const loadingFG = pages.loading.querySelector(".fg");
+  const loadingPct = document.getElementById("loadingPct");
+  const uploadingFG = pages.upload.querySelector(".fg");
+  const uploadPct = document.getElementById("uploadPct");
 
-// load from localStorage if present
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      state = Object.assign(state, parsed);
-      // ensure arrays exist
-      state.ratingsData = state.ratingsData || [];
-      state.billData = state.billData || { water:0, food:0, custom:[], tip:0 };
+  // IP/speed confirm
+  const ipText = document.getElementById("ipText");
+  const speedText = document.getElementById("speedText");
+  const btnYes = document.getElementById("btnYes");
+  const btnNo  = document.getElementById("btnNo");
+
+  // Success screen
+  const serverName = document.getElementById("serverName");
+  const serversLayer = document.getElementById("serversLayer");
+  const btnFinish = document.getElementById("btnFinish");
+
+  // Utilities
+  const TAU = Math.PI * 2;
+  const R = 68;                          // circle radius for both indicators
+  const CIRC = 2 * Math.PI * R;          // 427.256...
+  const LOADING_MS = 10000;              // 10 seconds for initial load
+  const WIFI_PAUSE_MS = 1400;            // small pause on "Wi‑Fi Connected"
+  const IP_PAUSE_MS = 600;               // minor delay before showing speeds
+  const UPLOAD_MS = 5200;                // uploading duration
+
+  // Prepare dash arrays
+  loadingFG.style.strokeDasharray = String(CIRC);
+  loadingFG.style.strokeDashoffset = String(CIRC);
+  uploadingFG.style.strokeDasharray = String(CIRC);
+  uploadingFG.style.strokeDashoffset = String(CIRC);
+
+  /* -------------------------------------------------------------------------
+     PAGE SWITCHER
+     ---------------------------------------------------------------------- */
+  function show(name) {
+    for (const key in pages) {
+      pages[key].classList.toggle("active", key === name);
     }
-  } catch(e){
-    console.warn('Could not parse saved state', e);
-  }
-}
-loadState();
-
-/* =========================
-   UI refs
-   ========================= */
-const nameInput = document.getElementById('nameInput');
-const starsEl = document.getElementById('stars');
-const starNodes = Array.from(document.querySelectorAll('.star'));
-const pendingHint = document.getElementById('pendingHint');
-const submitRatingBtn = document.getElementById('submitRatingBtn');
-const newPersonBtn = document.getElementById('newPersonBtn');
-const clearPendingBtn = document.getElementById('clearPendingBtn');
-const randomRateBtn = document.getElementById('randomRateBtn');
-const copyLinkBtn = document.getElementById('copyLinkBtn');
-
-const ratingsListEl = document.getElementById('ratingsList');
-const emptyHint = document.getElementById('emptyHint');
-const openBillBtn = document.getElementById('openBillBtn');
-const billPanel = document.getElementById('billPanel');
-
-const avgNum = document.getElementById('avgNum');
-const medianNum = document.getElementById('medianNum');
-const countNum = document.getElementById('countNum');
-
-const exportCsv = document.getElementById('exportCsv');
-const resetAll = document.getElementById('resetAll');
-const sortByRating = document.getElementById('sortByRating');
-const clearListBtn = document.getElementById('clearListBtn');
-
-const copyJsonBtn = copyLinkBtn;
-
-const openBillButton = document.getElementById('openBillBtn');
-const closeBillBtn = document.getElementById('closeBill');
-const saveBillBtn = document.getElementById('saveBill');
-const checkoutBtn = document.getElementById('checkout');
-
-const waterQtyEl = document.getElementById('waterQty');
-const foodQtyEl = document.getElementById('foodQty');
-const billSubtotal = document.getElementById('billSubtotal');
-const billTax = document.getElementById('billTax');
-const billTotal = document.getElementById('billTotal');
-const tipInput = document.getElementById('tipInput');
-const addCustomItemBtn = document.getElementById('addCustomItem');
-const customArea = document.getElementById('customArea');
-const customName = document.getElementById('customName');
-const customPrice = document.getElementById('customPrice');
-const addCustomConfirm = document.getElementById('addCustomConfirm');
-
-/* =========================
-   App Logic: Rating (Pending) behavior
-   ========================= */
-
-/* pending rating (not in ratingsData until Submit) */
-let pending = {
-  rating: 0,
-  name: ''
-};
-
-/* helpers */
-function saveState(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }catch(e){
-    console.warn('Failed to save state', e);
-  }
-}
-
-/* UI update of star visuals for a given value */
-function renderStars(value){
-  starNodes.forEach((s, idx) => {
-    const val = idx + 1;
-    if(val <= value) {
-      s.classList.add('lit');
-      s.setAttribute('aria-checked','true');
-    } else {
-      s.classList.remove('lit');
-      s.setAttribute('aria-checked','false');
-    }
-  });
-  pendingHint.textContent = value ? `Pending: ${value} star${value>1?'s':''}` : 'No pending rating';
-}
-
-/* click handler for stars - updates pending rating (does NOT save) */
-starNodes.forEach(s => {
-  s.addEventListener('click', (ev) => {
-    const v = Number(s.dataset.value)||0;
-    pending.rating = v;
-    renderStars(v);
-  });
-});
-
-/* keyboard support for stars container */
-starsEl.addEventListener('keydown', (ev) => {
-  if(ev.key === 'ArrowRight' || ev.key === 'ArrowUp'){
-    pending.rating = Math.min(5, (pending.rating||0) + 1);
-    renderStars(pending.rating);
-    ev.preventDefault();
-  } else if(ev.key === 'ArrowLeft' || ev.key === 'ArrowDown'){
-    pending.rating = Math.max(0, (pending.rating||0) - 1);
-    renderStars(pending.rating);
-    ev.preventDefault();
-  } else if(ev.key === 'Enter'){
-    // quick submit on Enter
-    submitCurrentRating();
-    ev.preventDefault();
-  }
-});
-
-/* clear pending */
-clearPendingBtn.addEventListener('click', () => {
-  pending.rating = 0;
-  pending.name = '';
-  nameInput.value = '';
-  renderStars(0);
-  pendingHint.textContent = 'Cleared pending rating';
-});
-
-/* random rating fun */
-randomRateBtn.addEventListener('click', () => {
-  const rv = Math.floor(Math.random() * 5) + 1;
-  pending.rating = rv;
-  renderStars(rv);
-});
-
-/* copy JSON to clipboard for sharing */
-copyJsonBtn.addEventListener('click', async () => {
-  const json = JSON.stringify(state, null, 2);
-  try{
-    await navigator.clipboard.writeText(json);
-    pendingHint.textContent = 'State copied to clipboard';
-  }catch(e){
-    pendingHint.textContent = 'Copy failed — permission?';
-  }
-});
-
-/* =========================
-   Submit Rating & New Person logic
-   ========================= */
-
-/* Submit button: commit pending rating into ratingsData.
-   - If name empty, default to "Unnamed".
-   - If we are editing an existing id (editId set), update that entry.
-*/
-let editId = null;
-
-submitRatingBtn.addEventListener('click', () => {
-  submitCurrentRating();
-});
-
-function submitCurrentRating(){
-  const nameVal = nameInput.value.trim() || 'Unnamed';
-  const ratingVal = Number(pending.rating) || 0;
-  if(ratingVal < 1){
-    pendingHint.textContent = 'Select at least 1 star before submitting';
-    return;
-  }
-  if(editId){
-    // update existing rating
-    const idx = state.ratingsData.findIndex(r => r.id === editId);
-    if(idx >= 0){
-      state.ratingsData[idx].name = nameVal;
-      state.ratingsData[idx].rating = ratingVal;
-      state.ratingsData[idx].ts = Date.now();
-      editId = null;
-      newPersonBtn.style.display = 'inline-block';
-      pendingHint.textContent = `Updated entry: ${nameVal} → ${ratingVal}★`;
-    } else {
-      // fallback: push as new
-      state.ratingsData.push({ id: generateId(), name: nameVal, rating: ratingVal, ts: Date.now() });
-      pendingHint.textContent = `Saved: ${nameVal} → ${ratingVal}★`;
-      newPersonBtn.style.display = 'inline-block';
-    }
-  } else {
-    // add new
-    state.ratingsData.push({ id: generateId(), name: nameVal, rating: ratingVal, ts: Date.now() });
-    pendingHint.textContent = `Saved: ${nameVal} → ${ratingVal}★`;
-    newPersonBtn.style.display = 'inline-block';
   }
 
-  // reset pending but keep name visible if needed
-  pending.rating = 0;
-  pending.name = '';
-  renderStars(0);
-  saveState();
-  refreshListUI();
-  updateStatsUI();
-  maybeEnableBill();
-}
-
-/* New Person button: reset form for next person (does not modify saved ratings) */
-newPersonBtn.addEventListener('click', () => {
-  nameInput.value = '';
-  pending.rating = 0;
-  editId = null;
-  renderStars(0);
-  pendingHint.textContent = 'Ready for next person';
-  newPersonBtn.style.display = 'none';
-});
-
-/* =========================
-   Ratings List UI & actions
-   ========================= */
-
-function refreshListUI(){
-  // clear old
-  ratingsListEl.innerHTML = '';
-
-  if(state.ratingsData.length === 0){
-    emptyHint.style.display = 'flex';
-    ratingsListEl.appendChild(emptyHint);
-  } else {
-    emptyHint.style.display = 'none';
+  /* -------------------------------------------------------------------------
+     RANDOM DATA GENERATORS
+     ---------------------------------------------------------------------- */
+  function randInt(min, max) { return (Math.random() * (max - min + 1) + min) | 0; }
+  function randFloat(min, max, decimals = 1) {
+    const v = Math.random() * (max - min) + min;
+    return Number(v.toFixed(decimals));
+  }
+  function randomIP() {
+    // Avoid reserved ranges loosely; just keep it looking plausible
+    const octet = () => Math.max(1, Math.min(254, randInt(2, 254)));
+    return `${octet()}.${octet()}.${octet()}.${octet()}`;
+  }
+  function randomSpeeds() {
+    const down = randFloat(120, 940, 1);  // 120–940 Mbps
+    const up   = randFloat(40, 420, 1);   // 40–420 Mbps
+    return { down, up };
   }
 
-  // sort by timestamp by default (newest first)
-  const arr = state.ratingsData.slice().sort((a,b) => b.ts - a.ts);
+  /* -------------------------------------------------------------------------
+     SERVER LOCATIONS (40 total; 7 popular from the US)
+     Coords are map-space (960 x 500). These are stylized approximate points.
+     ---------------------------------------------------------------------- */
+  const SERVER_POINTS = [
+    // 7 US popular
+    { name: "New York, USA",        x: 340, y: 200 },
+    { name: "Los Angeles, USA",     x: 150, y: 280 },
+    { name: "Chicago, USA",         x: 300, y: 210 },
+    { name: "Houston, USA",         x: 290, y: 270 },
+    { name: "Miami, USA",           x: 360, y: 320 },
+    { name: "Seattle, USA",         x: 170, y: 170 },
+    { name: "San Francisco, USA",   x: 170, y: 250 },
 
-  arr.forEach(entry => {
-    const item = document.createElement('div');
-    item.className = 'item';
-    item.setAttribute('data-id', entry.id);
+    // North America
+    { name: "Toronto, Canada",      x: 320, y: 180 },
+    { name: "Vancouver, Canada",    x: 200, y: 170 },
+    { name: "Montreal, Canada",     x: 340, y: 185 },
 
-    const left = document.createElement('div');
-    left.className = 'left';
+    // Europe
+    { name: "London, UK",           x: 580, y: 130 },
+    { name: "Paris, France",        x: 600, y: 150 },
+    { name: "Berlin, Germany",      x: 625, y: 140 },
+    { name: "Madrid, Spain",        x: 585, y: 190 },
+    { name: "Rome, Italy",          x: 640, y: 180 },
+    { name: "Amsterdam, Netherlands", x: 610, y: 140 },
+    { name: "Dublin, Ireland",      x: 560, y: 120 },
+    { name: "Zurich, Switzerland",  x: 620, y: 160 },
+    { name: "Stockholm, Sweden",    x: 640, y: 100 },
 
-    const avatar = document.createElement('div');
-    avatar.style.width = '46px';
-    avatar.style.height = '46px';
-    avatar.style.borderRadius = '8px';
-    avatar.style.background = 'linear-gradient(135deg,#111,#1a1a1a)';
-    avatar.style.display = 'grid';
-    avatar.style.placeItems = 'center';
-    avatar.style.fontWeight = '700';
-    avatar.style.color = 'var(--accent)';
-    avatar.textContent = entry.name.charAt(0).toUpperCase();
+    // Middle East / Africa
+    { name: "Dubai, UAE",           x: 690, y: 240 },
+    { name: "Istanbul, Turkey",     x: 660, y: 180 },
+    { name: "Cairo, Egypt",         x: 650, y: 220 },
+    { name: "Johannesburg, South Africa", x: 670, y: 360 },
 
-    const nameWrap = document.createElement('div');
-    nameWrap.style.minWidth = '160px';
+    // Asia
+    { name: "Mumbai, India",        x: 720, y: 250 },
+    { name: "Singapore",            x: 780, y: 280 },
+    { name: "Beijing, China",       x: 770, y: 160 },
+    { name: "Shanghai, China",      x: 780, y: 180 },
+    { name: "Hong Kong",            x: 790, y: 200 },
+    { name: "Tokyo, Japan",         x: 850, y: 190 },
+    { name: "Seoul, South Korea",   x: 830, y: 180 },
+    { name: "Bangkok, Thailand",    x: 795, y: 240 },
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'name';
-    nameEl.textContent = entry.name;
-    nameEl.style.cursor = 'pointer';
-    nameEl.title = 'Click to load into form for quick edit';
-    nameEl.addEventListener('click', () => {
-      // load into form for editing
-      nameInput.value = entry.name;
-      pending.rating = entry.rating;
-      renderStars(entry.rating);
-      editId = entry.id;
-      newPersonBtn.style.display = 'inline-block';
-      pendingHint.textContent = `Editing ${entry.name} — change stars then Submit`;
+    // Oceania
+    { name: "Sydney, Australia",    x: 880, y: 390 },
+    { name: "Melbourne, Australia", x: 870, y: 410 },
+    { name: "Brisbane, Australia",  x: 890, y: 370 },
+    { name: "Auckland, New Zealand",x: 930, y: 430 },
+
+    // Latin America
+    { name: "Mexico City, Mexico",  x: 330, y: 290 },
+    { name: "Bogotá, Colombia",     x: 400, y: 310 },
+    { name: "Lima, Peru",           x: 410, y: 350 },
+    { name: "São Paulo, Brazil",    x: 470, y: 370 },
+    { name: "Buenos Aires, Argentina", x: 500, y: 410 }
+  ];
+
+  /* -------------------------------------------------------------------------
+     RENDER SERVER MARKERS ON MAP
+     ---------------------------------------------------------------------- */
+  function clearServers() {
+    while (serversLayer.firstChild) serversLayer.removeChild(serversLayer.firstChild);
+  }
+
+  function renderServers(highlightName) {
+    clearServers();
+    SERVER_POINTS.forEach(pt => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("transform", `translate(${pt.x}, ${pt.y})`);
+
+      const r = (pt.name === highlightName) ? 4.8 : 3.2;
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("class", "server-dot");
+      circle.setAttribute("r", String(r));
+      circle.setAttribute("cx", "0");
+      circle.setAttribute("cy", "0");
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("class", "server-label");
+      text.setAttribute("x", "6");
+      text.setAttribute("y", "-6");
+      text.textContent = pt.name;
+
+      g.appendChild(circle);
+      g.appendChild(text);
+      serversLayer.appendChild(g);
     });
+  }
 
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    const date = new Date(entry.ts);
-    meta.textContent = `${entry.rating} ★ • ${date.toLocaleString()}`;
+  /* -------------------------------------------------------------------------
+     PROGRESS ANIMATION HELPERS
+     ---------------------------------------------------------------------- */
+  function setProgress(el, pct) {
+    const clamped = Math.max(0, Math.min(100, pct));
+    const offset = CIRC * (1 - clamped / 100);
+    el.style.strokeDashoffset = String(offset);
+  }
 
-    nameWrap.appendChild(nameEl);
-    nameWrap.appendChild(meta);
-
-    left.appendChild(avatar);
-    left.appendChild(nameWrap);
-
-    const right = document.createElement('div');
-    right.className = 'controls';
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'icon-btn';
-    editBtn.textContent = '✏️';
-    editBtn.title = 'Edit';
-    editBtn.addEventListener('click', () => {
-      nameInput.value = entry.name;
-      pending.rating = entry.rating;
-      renderStars(entry.rating);
-      editId = entry.id;
-      pendingHint.textContent = `Editing ${entry.name}`;
-      newPersonBtn.style.display = 'inline-block';
-    });
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'icon-btn';
-    delBtn.textContent = '🗑';
-    delBtn.title = 'Delete';
-    delBtn.addEventListener('click', () => {
-      if(confirm(`Delete "${entry.name}" (${entry.rating}★)?`)){
-        state.ratingsData = state.ratingsData.filter(r => r.id !== entry.id);
-        saveState();
-        refreshListUI();
-        updateStatsUI();
-        maybeEnableBill();
+  function animateProgress(durationMs, onUpdate, onDone) {
+    const t0 = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - t0) / durationMs);
+      onUpdate(t);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else if (onDone) {
+        onDone();
       }
-    });
-
-    right.appendChild(editBtn);
-    right.appendChild(delBtn);
-
-    item.appendChild(left);
-    item.appendChild(right);
-
-    ratingsListEl.appendChild(item);
-  });
-}
-
-/* =========================
-   Stats calculation (avg, median, count)
-   ========================= */
-
-function updateStatsUI(){
-  const arr = state.ratingsData.map(r => r.rating);
-  const count = arr.length;
-  countNum.textContent = count;
-  if(count === 0){
-    avgNum.textContent = '-';
-    medianNum.textContent = '-';
-    return;
-  }
-  const sum = arr.reduce((a,b)=>a+b,0);
-  const avg = (sum/count);
-  avgNum.textContent = avg.toFixed(2) + ' ★';
-
-  // median
-  const sorted = arr.slice().sort((a,b)=>a-b);
-  let median;
-  if(sorted.length % 2 === 1) median = sorted[(sorted.length-1)/2];
-  else median = (sorted[sorted.length/2 -1] + sorted[sorted.length/2]) / 2;
-  medianNum.textContent = (Math.round(median*100)/100) + ' ★';
-}
-
-/* =========================
-   Sorting / Export / Reset
-   ========================= */
-
-let sortDir = 'desc'; // desc by default
-
-sortByRating.addEventListener('click', () => {
-  if(sortDir === 'desc') {
-    state.ratingsData.sort((a,b) => a.rating - b.rating);
-    sortDir = 'asc';
-    sortByRating.textContent = 'Sort ↑';
-  } else {
-    state.ratingsData.sort((a,b) => b.rating - a.rating);
-    sortDir = 'desc';
-    sortByRating.textContent = 'Sort ↓';
-  }
-  saveState();
-  refreshListUI();
-});
-
-/* export CSV helper */
-exportCsv.addEventListener('click', () => {
-  if(state.ratingsData.length === 0) return alert('No ratings to export.');
-  const rows = [['id','name','rating','ts']];
-  state.ratingsData.forEach(r => rows.push([r.id, r.name, r.rating, new Date(r.ts).toISOString()]));
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'ratings.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-/* Reset ALL data */
-resetAll.addEventListener('click', () => {
-  if(!confirm('Reset everything? This clears ratings and bill.')) return;
-  state.ratingsData = [];
-  state.billData = { water:0, food:0, custom:[], tip:0 };
-  saveState();
-  refreshListUI();
-  updateStatsUI();
-  syncBillUI();
-  maybeEnableBill();
-});
-
-/* Clear list only */
-clearListBtn.addEventListener('click', () => {
-  if(!confirm('Clear ratings list?')) return;
-  state.ratingsData = [];
-  saveState();
-  refreshListUI();
-  updateStatsUI();
-  maybeEnableBill();
-});
-
-/* =========================
-   Utility helpers
-   ========================= */
-function generateId() {
-  return 'id_' + Math.random().toString(36).slice(2,9);
-}
-
-/* =========================
-   Bill Panel Logic
-   ========================= */
-
-function maybeEnableBill(){
-  if(state.ratingsData.length >= 3){
-    openBillButton.style.display = 'inline-block';
-  } else {
-    openBillButton.style.display = 'none';
-    // also hide bill if open
-    if(billPanel.style.display !== 'none'){
-      billPanel.style.display = 'none';
     }
+    requestAnimationFrame(frame);
   }
-}
 
-/* Sync bill UI with state */
-function syncBillUI(){
-  const bd = state.billData;
-  waterQtyEl.textContent = bd.water || 0;
-  foodQtyEl.textContent = bd.food || 0;
+  /* -------------------------------------------------------------------------
+     FLOW HANDLERS
+     ---------------------------------------------------------------------- */
+  function runLoading() {
+    show("loading");
+    // Reset progress
+    setProgress(loadingFG, 0);
+    loadingPct.textContent = "0%";
 
-  // custom items area (clear previous)
-  // remove existing custom rows except the two default rows
-  // We'll render any custom items below water/food
-  const customContainer = document.createElement('div');
-  // find existing custom rows and remove them
-  const existingCustom = Array.from(document.querySelectorAll('.bill-row.custom'));
-  existingCustom.forEach(n => n.remove());
-
-  // Insert custom rows after the default ones
-  const billItems = document.getElementById('billItems');
-
-  // For each custom item in state, append a row
-  bd.custom = bd.custom || [];
-  bd.custom.forEach(ci => {
-    const row = document.createElement('div');
-    row.className = 'bill-row custom';
-    row.setAttribute('data-custom-id', ci.id);
-
-    const info = document.createElement('div');
-    info.className = 'info';
-    const emojiDiv = document.createElement('div');
-    emojiDiv.style.fontSize = '20px';
-    emojiDiv.textContent = '🛒';
-    const nameDiv = document.createElement('div');
-    nameDiv.innerHTML = `<div style="font-weight:700">${ci.name}</div><div class="small-ghost small">$${Number(ci.price).toFixed(2)} each</div>`;
-    info.appendChild(emojiDiv);
-    info.appendChild(nameDiv);
-
-    const qtyControls = document.createElement('div');
-    qtyControls.className = 'qty-controls';
-    const dec = document.createElement('button');
-    dec.className = 'icon-btn';
-    dec.textContent = '−';
-    dec.addEventListener('click', () => {
-      if(ci.qty > 0) ci.qty--;
-      saveState();
-      syncBillUI();
+    animateProgress(LOADING_MS, t => {
+      const pct = Math.round(t * 100);
+      setProgress(loadingFG, pct);
+      loadingPct.textContent = pct + "%";
+    }, () => {
+      // After loading completes, briefly show Wi‑Fi screen
+      show("wifi");
+      setTimeout(() => {
+        // Then proceed to IP confirm
+        runIPConfirm();
+      }, WIFI_PAUSE_MS);
     });
-    const qtyDisplay = document.createElement('div');
-    qtyDisplay.style.minWidth = '28px';
-    qtyDisplay.style.textAlign = 'center';
-    qtyDisplay.textContent = ci.qty;
-    const inc = document.createElement('button');
-    inc.className = 'icon-btn';
-    inc.textContent = '+';
-    inc.addEventListener('click', () => {
-      ci.qty++;
-      saveState();
-      syncBillUI();
+  }
+
+  function runIPConfirm() {
+    show("ip");
+
+    // Generate randomized info
+    const ip = randomIP();
+    const { down, up } = randomSpeeds();
+
+    // Fill UI
+    ipText.textContent = ip;
+    // slight delay to stage the reveal effect
+    speedText.textContent = "Analyzing…";
+    setTimeout(() => {
+      speedText.textContent = `Download: ${down} Mbps  |  Upload: ${up} Mbps`;
+    }, IP_PAUSE_MS);
+
+    // Button handlers
+    btnYes.onclick = () => {
+      runUploading();
+    };
+
+    btnNo.onclick = () => {
+      // Restart to the loading page (like "loading internet thing")
+      runLoading();
+    };
+  }
+
+  function runUploading() {
+    show("upload");
+    setProgress(uploadingFG, 0);
+    uploadPct.textContent = "0%";
+
+    animateProgress(UPLOAD_MS, t => {
+      const pct = Math.round(t * 100);
+      setProgress(uploadingFG, pct);
+      uploadPct.textContent = pct + "%";
+    }, () => {
+      // Done → success page
+      runSuccess();
     });
-
-    const del = document.createElement('button');
-    del.className = 'icon-btn';
-    del.textContent = '🗑';
-    del.title = 'Remove custom item';
-    del.addEventListener('click', () => {
-      if(confirm(`Remove custom item "${ci.name}"?`)){
-        state.billData.custom = state.billData.custom.filter(x => x.id !== ci.id);
-        saveState();
-        syncBillUI();
-      }
-    });
-
-    qtyControls.appendChild(dec);
-    qtyControls.appendChild(qtyDisplay);
-    qtyControls.appendChild(inc);
-    qtyControls.appendChild(del);
-
-    row.appendChild(info);
-    row.appendChild(qtyControls);
-
-    billItems.appendChild(row);
-  });
-
-  // Calculate totals
-  const waterPrice = 1.00;
-  const foodPrice = 2.00;
-  let subtotal = (bd.water || 0) * waterPrice + (bd.food || 0) * foodPrice;
-  bd.custom.forEach(ci => {
-    subtotal += (Number(ci.price) || 0) * (ci.qty || 0);
-  });
-
-  const tax = subtotal * 0.05;
-  const tipVal = Number(bd.tip) || 0;
-  const total = subtotal + tax + tipVal;
-
-  billSubtotal.textContent = '$' + subtotal.toFixed(2);
-  billTax.textContent = '$' + tax.toFixed(2);
-  billTotal.textContent = '$' + total.toFixed(2);
-
-  // update tip input
-  tipInput.value = bd.tip ? Number(bd.tip).toFixed(2) : '';
-}
-
-/* bill increment/decrement for water/food */
-document.querySelectorAll('.icon-btn[data-item]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const action = btn.dataset.action;
-    const item = btn.dataset.item;
-    if(item === 'water'){
-      if(action === 'inc') state.billData.water = (state.billData.water || 0) + 1;
-      else state.billData.water = Math.max(0, (state.billData.water || 0) - 1);
-    } else if(item === 'food'){
-      if(action === 'inc') state.billData.food = (state.billData.food || 0) + 1;
-      else state.billData.food = Math.max(0, (state.billData.food || 0) - 1);
-    }
-    saveState();
-    syncBillUI();
-  });
-});
-
-/* open bill button */
-openBillButton.addEventListener('click', () => {
-  billPanel.style.display = 'flex';
-  syncBillUI();
-});
-
-/* close bill */
-closeBillBtn.addEventListener('click', () => {
-  billPanel.style.display = 'none';
-});
-
-/* add custom item toggle */
-addCustomItemBtn.addEventListener('click', () => {
-  customArea.style.display = customArea.style.display === 'none' ? 'flex' : 'none';
-});
-
-/* confirm add custom item */
-addCustomConfirm.addEventListener('click', () => {
-  const name = customName.value.trim();
-  const price = parseFloat(customPrice.value);
-  if(!name || isNaN(price) || price <= 0){
-    alert('Provide valid name and price for custom item.');
-    return;
   }
-  const id = generateId();
-  state.billData.custom.push({ id, name, price: Number(price), qty: 1 });
-  customName.value = '';
-  customPrice.value = '';
-  saveState();
-  syncBillUI();
-});
 
-/* tip input binding */
-tipInput.addEventListener('change', () => {
-  const val = parseFloat(tipInput.value);
-  state.billData.tip = isNaN(val) ? 0 : val;
-  saveState();
-  syncBillUI();
-});
+  function runSuccess() {
+    show("success");
+    // Pick a random server and render markers
+    const pick = SERVER_POINTS[(Math.random() * SERVER_POINTS.length) | 0];
+    serverName.textContent = pick.name;
+    renderServers(pick.name);
 
-/* save bill action */
-saveBillBtn.addEventListener('click', () => {
-  saveState();
-  alert('Bill saved to localStorage.');
-});
-
-/* checkout: simple behaviour -> show receipt and clear bill */
-checkoutBtn.addEventListener('click', () => {
-  const bd = state.billData;
-  const subtotal = parseFloat(billSubtotal.textContent.replace('$','')) || 0;
-  if(subtotal <= 0 && (!bd.tip || bd.tip === 0)){
-    if(!confirm('Checkout with $0 total?')) return;
+    // Finish button just does nothing or could loop back if you want
+    btnFinish.onclick = () => {
+      // Optional: Reset to IP confirm or to loading; here we keep user on success.
+      // Uncomment to loop back to IP screen:
+      // runIPConfirm();
+      // Or to restart full flow:
+      // runLoading();
+      btnFinish.blur();
+    };
   }
-  // build receipt summary
-  let receipt = 'Receipt\n\n';
-  receipt += `Water 🥤 x ${bd.water || 0}\n`;
-  receipt += `Food 🍔 x ${bd.food || 0}\n`;
-  bd.custom.forEach(ci => receipt += `${ci.name} x ${ci.qty} @ $${ci.price.toFixed(2)}\n`);
-  const tax = parseFloat(billTax.textContent.replace('$','')) || 0;
-  const total = parseFloat(billTotal.textContent.replace('$','')) || 0;
-  receipt += `\nTax: $${tax.toFixed(2)}\n`;
-  receipt += `Tip: $${Number(bd.tip||0).toFixed(2)}\n`;
-  receipt += `Total: $${total.toFixed(2)}\n\n`;
-  receipt += 'Thanks for using Star Rating App';
 
-  alert(receipt);
-
-  // clear bill
-  state.billData = { water:0, food:0, custom:[], tip:0 };
-  saveState();
-  syncBillUI();
-  billPanel.style.display = 'none';
-});
-
-/* Save tip on Enter in tip input */
-tipInput.addEventListener('keydown', (ev) => {
-  if(ev.key === 'Enter'){
-    tipInput.blur();
-  }
-});
-
-/* =========================
-   Initialize + helpers
-   ========================= */
-
-function initialize(){
-  refreshListUI();
-  updateStatsUI();
-  maybeEnableBill();
-  syncBillUI();
-  // show if persisted
-  document.getElementById('persistHint').textContent = localStorage.getItem(STORAGE_KEY) ? 'Yes' : 'No';
-}
-
-/* sync initial data if any */
-initialize();
-
-/* =========================
-   Extra: Auto-save after edits (watch for list changes)
-   ========================= */
-
-/* MutationObserver to keep custom rows in sync (not strictly necessary, but helps) */
-const mo = new MutationObserver(() => {
-  // ensure totals up to date
-  syncBillUI();
-});
-mo.observe(document.getElementById('billItems'), { childList: true, subtree: true });
-
-/* End of script */
+  /* -------------------------------------------------------------------------
+     INIT
+     ---------------------------------------------------------------------- */
+  // Initial render of all server locations (no highlight)
+  renderServers();
+  // Begin the flow
+  runLoading();
+})();
 </script>
+
+<!--
+================================================================================
+NOTES:
+- No "steps" wording anywhere in the UI text.
+- Single index.html page, with 5 internal screen states toggled via JS.
+- Bright green & black modern look, with glow and subtle grid background.
+- World map SVG included; server city name appears above it, and markers/labels
+  are placed on the map (40 total, 7 from the US).
+- If you want the Finish button to loop back, uncomment in runSuccess().
+- If you want different durations, adjust LOADING_MS and UPLOAD_MS.
+================================================================================
+-->
 </body>
 </html>
