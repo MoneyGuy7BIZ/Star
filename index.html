@@ -2,285 +2,170 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Green/Black Network Flow — Loading → WiFi → IP Confirm → Upload → Success</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VPN Flow — Loading → Wi-Fi → IP Confirm → Upload → Map → USB Inject</title>
 <style>
-  /* =======================================================================
-     GLOBAL RESET + THEME
-     ======================================================================= */
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-
-  body {
-    background: #000;                 /* Pure black background */
-    color: #39ff14;                   /* Bright neon green text color */
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-    overflow: hidden;                 /* Prevent default scroll */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    user-select: none;
+  /* ==========================================================================
+     THEME: Neon Green on Black — VPN Style
+     ========================================================================== */
+  :root{
+    --bg:#000;
+    --green:#39ff14;
+    --green-soft:rgba(57,255,20,.65);
+    --panel:rgba(7,27,5,.68);
+    --line:rgba(57,255,20,.45);
+    --grid:rgba(57,255,20,.08);
+    --muted:rgba(57,255,20,.85);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    color:var(--green);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,ui-monospace,"Apple Color Emoji","Segoe UI Emoji";
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    user-select:none;
   }
 
-  /* =======================================================================
-     APP CONTAINER
-     ======================================================================= */
-  #app {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-    display: block;
-    background: radial-gradient(1200px 600px at 50% 20%, rgba(57,255,20,0.08), transparent 60%),
-                radial-gradient(1000px 500px at 80% 80%, rgba(57,255,20,0.06), transparent 60%),
-                #000;
-  }
-
-  /* Subtle grid glow backdrop (no “steps” text anywhere) */
-  #grid {
-    position: absolute;
-    inset: 0;
+  /* App shell */
+  #app{
+    position:relative;
+    width:100vw; height:100vh;
     background:
-      linear-gradient(transparent 29px, rgba(57,255,20,0.08) 30px, transparent 31px) 0 0 / 100% 30px,
-      linear-gradient(90deg, transparent 29px, rgba(57,255,20,0.08) 30px, transparent 31px) 0 0 / 30px 100%;
-    mask-image: radial-gradient(80% 60% at 50% 50%, #000 65%, transparent);
-    opacity: 0.35;
-    pointer-events: none;
+      radial-gradient(1200px 600px at 50% 15%, rgba(57,255,20,.08), transparent 60%),
+      radial-gradient(900px 500px at 80% 80%, rgba(57,255,20,.06), transparent 60%),
+      var(--bg);
   }
 
-  /* =======================================================================
-     PAGES
-     ======================================================================= */
-  .page {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    gap: 18px;
+  /* Soft cyber grid background */
+  #grid{
+    position:absolute; inset:0;
+    background:
+      linear-gradient(transparent 29px, var(--grid) 30px, transparent 31px) 0 0/100% 30px,
+      linear-gradient(90deg, transparent 29px, var(--grid) 30px, transparent 31px) 0 0/30px 100%;
+    mask-image: radial-gradient(80% 65% at 50% 50%, #000 60%, transparent);
+    opacity:.35; pointer-events:none;
   }
-  .page.active { display: flex; }
+
+  /* Pages */
+  .page{
+    position:absolute; inset:0; display:none;
+    align-items:center; justify-content:center; flex-direction:column; gap:16px;
+    text-align:center;
+  }
+  .page.active{display:flex}
 
   /* Headings */
-  h1, h2, h3 {
-    margin: 0;
-    letter-spacing: 0.08em;
-    text-shadow: 0 0 10px #39ff14, 0 0 22px rgba(57,255,20,0.8);
-    font-weight: 900;
-  }
-  h1 { font-size: clamp(28px, 4vw, 46px); }
-  h2 { font-size: clamp(22px, 3vw, 34px); }
-  h3 { font-size: clamp(18px, 2.4vw, 24px); font-weight: 800; }
+  h1,h2,h3{margin:0; letter-spacing:.08em; font-weight:900; text-shadow:0 0 10px var(--green),0 0 22px var(--green-soft)}
+  h1{font-size:clamp(28px,4.6vw,48px)}
+  h2{font-size:clamp(22px,3.6vw,36px)}
+  h3{font-size:clamp(18px,3vw,24px); font-weight:800}
 
-  p {
-    margin: 2px 0 0 0;
-    font-size: clamp(14px, 2.2vw, 18px);
-    letter-spacing: 0.04em;
-    opacity: 0.95;
+  p{margin:0; font-size:clamp(14px,2.4vw,18px); letter-spacing:.04em}
+
+  /* Panels */
+  .panel{
+    background:linear-gradient(180deg, rgba(7,27,5,.85), rgba(7,27,5,.4));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px 22px;
+    box-shadow:0 0 24px rgba(57,255,20,.18), inset 0 0 10px rgba(0,0,0,.55);
+    backdrop-filter: blur(2px);
   }
 
   /* Buttons */
-  .btn-row { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
-  button {
-    background: rgba(0,0,0,0.4);
-    color: #39ff14;
-    border: 2px solid #39ff14;
-    border-radius: 14px;
-    padding: 10px 18px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
-    text-shadow: 0 0 8px rgba(57,255,20,0.8);
+  .row{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:8px}
+  button{
+    background:rgba(0,0,0,.5); color:var(--green);
+    border:2px solid var(--green);
+    border-radius:14px; padding:10px 18px;
+    font-weight:900; letter-spacing:.06em; cursor:pointer;
+    transition:transform .08s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+    text-shadow:0 0 8px var(--green-soft);
   }
-  button:hover {
-    background: #39ff14;
-    color: #000;
-    box-shadow: 0 0 16px #39ff14, inset 0 0 6px rgba(0,0,0,0.6);
-  }
-  button:active { transform: translateY(1px) scale(0.98); }
+  button:hover{background:var(--green); color:#000; box-shadow:0 0 16px var(--green), inset 0 0 6px rgba(0,0,0,.6)}
+  button:active{transform:translateY(1px) scale(.98)}
 
-  /* Cards/panels */
-  .panel {
-    background: linear-gradient(180deg, rgba(7,27,5,0.8), rgba(7,27,5,0.42));
-    border: 1px solid rgba(57,255,20,0.35);
-    box-shadow: 0 0 24px rgba(57,255,20,0.15), inset 0 0 10px rgba(0,0,0,0.5);
-    backdrop-filter: blur(2px);
-    border-radius: 18px;
-    padding: 18px 22px;
-  }
+  /* Circular progress (loading & uploading) */
+  .circle-wrap{width:clamp(160px,24vw,220px); height:clamp(160px,24vw,220px); position:relative; display:inline-block}
+  .circle{width:100%; height:100%}
+  .circle .bg{fill:none; stroke:#0a2900; stroke-width:14}
+  .circle .fg{fill:none; stroke:var(--green); stroke-width:14; stroke-linecap:round; filter:drop-shadow(0 0 10px var(--green)); transition:stroke-dashoffset .2s ease}
+  .circle-label{position:absolute; inset:0; display:grid; place-items:center; font-weight:1000; text-shadow:0 0 10px var(--green); font-size:clamp(30px,5.5vw,48px)}
 
-  /* =======================================================================
-     CIRCULAR PROGRESS (LOADING + UPLOADING)
-     ======================================================================= */
-  .circle-wrap {
-    width: clamp(160px, 24vw, 220px);
-    height: clamp(160px, 24vw, 220px);
-    position: relative;
-    display: inline-block;
-  }
-  .circle {
-    width: 100%; height: 100%;
-  }
-  .circle .bg {
-    fill: none;
-    stroke: #0a2900;
-    stroke-width: 14;
-  }
-  .circle .fg {
-    fill: none;
-    stroke: #39ff14;
-    stroke-width: 14;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 10px #39ff14);
-    transition: stroke-dashoffset 0.2s ease;
-  }
-  .circle-label {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font-weight: 1000;
-    text-shadow: 0 0 10px #39ff14;
-    font-size: clamp(30px, 5.5vw, 48px);
-  }
+  /* Wi-Fi icon */
+  .wifi{width:clamp(84px,10vw,120px); height:auto; margin-bottom:6px; filter:drop-shadow(0 0 10px var(--green))}
+  .wifi .arc{fill:none; stroke:var(--green); stroke-width:6}
+  .wifi .dot{fill:var(--green)}
 
-  /* =======================================================================
-     WIFI ICON (Connected)
-     ======================================================================= */
-  .wifi {
-    width: clamp(84px, 10vw, 120px);
-    height: auto;
-    margin-bottom: 6px;
-    filter: drop-shadow(0 0 10px #39ff14);
-  }
-  .wifi .arc { fill: none; stroke: #39ff14; stroke-width: 6; }
-  .wifi .dot { fill: #39ff14; }
+  /* IP confirm */
+  .mono{font-family:ui-monospace, "Cascadia Code","Source Code Pro", Menlo, Consolas, monospace}
+  .ip{font-size:clamp(20px,3.6vw,36px); letter-spacing:.08em; font-weight:1000; text-shadow:0 0 10px var(--green),0 0 20px var(--green-soft)}
+  .speeds{font-size:clamp(14px,2.6vw,20px); font-weight:800; letter-spacing:.05em}
+  .question{font-size:clamp(16px,2.8vw,22px); font-weight:900; margin-top:6px}
 
-  /* =======================================================================
-     IP + SPEED CONFIRM
-     ======================================================================= */
-  .mono {
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "Liberation Mono", monospace;
-  }
-  .ip {
-    font-size: clamp(20px, 3.6vw, 36px);
-    letter-spacing: 0.08em;
-    font-weight: 1000;
-    text-shadow: 0 0 10px #39ff14, 0 0 20px rgba(57,255,20,0.6);
-  }
-  .speeds {
-    font-size: clamp(14px, 2.5vw, 20px);
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    opacity: 0.95;
-  }
-  .confirm-question {
-    font-size: clamp(16px, 2.6vw, 22px);
-    font-weight: 900;
-    margin-top: 6px;
-  }
+  /* Uploading */
+  .uploading-title{font-size:clamp(22px,3.6vw,36px); font-weight:1000; letter-spacing:.12em}
+  .dots{animation:blink 1.4s infinite steps(2,end)}
+  @keyframes blink{50%{opacity:.3}}
 
-  /* =======================================================================
-     UPLOADING
-     ======================================================================= */
-  .uploading-title {
-    font-size: clamp(22px, 3vw, 36px);
-    font-weight: 1000;
-    letter-spacing: 0.12em;
-  }
-  .dots {
-    animation: blink 1.4s infinite steps(2, end);
-  }
-  @keyframes blink { 50% { opacity: 0.3; } }
+  /* Success + Map */
+  .server-name{font-size:clamp(20px,3.2vw,34px); font-weight:1000; letter-spacing:.08em; text-shadow:0 0 10px var(--green),0 0 20px var(--green-soft)}
+  .map-wrap{width:min(1100px,94vw); margin:6px auto 0}
+  .world{width:100%; height:auto; display:block; filter:drop-shadow(0 0 14px rgba(57,255,20,.45))}
+  .ocean{fill:#083a4b}     /* teal-ish ocean so dots pop */
+  .graticule{stroke:rgba(255,255,255,.18); stroke-width:.6}
+  .land{fill:#0a2900; stroke:var(--green); stroke-width:.55; opacity:.92}
 
-  /* =======================================================================
-     SUCCESS + WORLD MAP
-     ======================================================================= */
-  .success-title { font-size: clamp(28px, 4vw, 48px); }
-  .success-subtitle { font-size: clamp(16px, 2.4vw, 22px); opacity: 0.95; }
-  .server-name {
-    font-size: clamp(20px, 3.2vw, 34px);
-    font-weight: 1000;
-    letter-spacing: 0.08em;
-    text-shadow: 0 0 10px #39ff14, 0 0 20px rgba(57,255,20,0.75);
-  }
+  .marker{transform-box:fill-box; transform-origin:center; animation:pop .6s cubic-bezier(.2,.7,.2,1.4) forwards; opacity:0}
+  .marker circle{fill:var(--green); filter:drop-shadow(0 0 6px var(--green));}
+  .marker text{font:700 11px/1 ui-monospace, "Source Code Pro", Menlo, Consolas, monospace; fill:var(--green); paint-order:stroke; stroke:rgba(0,0,0,.85); stroke-width:2px; letter-spacing:.03em; pointer-events:none}
+  @keyframes pop{0%{opacity:0; transform:scale(0)} 60%{opacity:1; transform:scale(1.2)} 100%{opacity:1; transform:scale(1)}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{filter:drop-shadow(0 0 6px var(--green))} 50%{filter:drop-shadow(0 0 16px var(--green))}}
 
-  .map-wrap {
-    width: min(1000px, 92vw);
-    margin-inline: auto;
-    margin-top: 8px;
+  /* Zoom controls (optional UI) */
+  .zoomHUD{
+    position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column; gap:8px; z-index:4
   }
-  .world-map {
-    width: 100%;
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 0 14px rgba(57,255,20,0.5));
-  }
-  .map-bg {
-    fill: #000;
-  }
-  .land {
-    fill: #0a2900;
-    stroke: #39ff14;
-    stroke-width: 0.65;
-    opacity: 0.88;
-  }
-  .server-dot {
-    fill: #39ff14;
-    opacity: 0.92;
-    filter: drop-shadow(0 0 6px #39ff14);
-  }
-  .server-label {
-    font: 700 11px/1 ui-monospace, "Source Code Pro", Menlo, Consolas, monospace;
-    fill: #39ff14;
-    paint-order: stroke;
-    stroke: rgba(0,0,0,0.8);
-    stroke-width: 2px;
-    letter-spacing: 0.04em;
-    pointer-events: none;
-  }
+  .zoomHUD button{padding:8px 10px; width:44px}
 
-  /* =======================================================================
-     FLOATING CHROME (non-intrusive, decorative)
-     ======================================================================= */
-  .chrome {
-    position: absolute;
-    inset: 16px 16px auto auto;
-    display: flex; gap: 8px;
-    z-index: 3;
+  /* USB Injection screen */
+  .usb-title{font-size:clamp(22px,3.2vw,34px); font-weight:1000; letter-spacing:.12em}
+  .bar{width:min(720px,92vw); height:14px; border:2px solid var(--green); border-radius:10px; margin:8px auto; overflow:hidden; box-shadow:0 0 10px rgba(57,255,20,.35) inset}
+  .bar-fill{width:0%; height:100%; background:var(--green); box-shadow:0 0 12px var(--green); transition:width .2s ease}
+  .terminal{
+    width:min(900px,94vw); height:min(40vh,320px);
+    background:rgba(0,0,0,.6);
+    border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 0 18px rgba(57,255,20,.18) inset;
+    padding:12px 14px; margin-top:6px; text-align:left; overflow:auto; white-space:pre-wrap; line-height:1.38
   }
-  .chip {
-    padding: 6px 10px;
-    border: 1px solid rgba(57,255,20,0.4);
-    background: linear-gradient(180deg, rgba(7,27,5,0.7), rgba(7,27,5,0.28));
-    border-radius: 999px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-shadow: 0 0 6px rgba(57,255,20,0.7);
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.6), 0 0 12px rgba(57,255,20,0.2);
-  }
+  .log-line{color:var(--muted)}
+  .ok{color:var(--green)}
+  .warn{color:#c6ff8c}
+  .err{color:#ff6b6b}
+  .check{display:inline-block; width:18px; height:18px; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); margin-right:6px; vertical-align:middle}
 
-  /* Responsive helpers */
-  @media (max-width: 540px) {
-    .btn-row { gap: 12px; }
-    .panel { padding: 14px 16px; }
-  }
+  /* Small chrome tags */
+  .chrome{position:absolute; inset:16px 16px auto auto; display:flex; gap:8px; z-index:3}
+  .chip{padding:6px 10px; border:1px solid var(--line); background:linear-gradient(180deg, rgba(7,27,5,.7), rgba(7,27,5,.28)); border-radius:999px; font-weight:800; letter-spacing:.05em; text-shadow:0 0 6px var(--green-soft); box-shadow:inset 0 0 10px rgba(0,0,0,.6), 0 0 12px rgba(57,255,20,.2)}
+
+  @media (max-width:560px){ .panel{padding:14px 16px} .row{gap:11px} }
 </style>
 </head>
 <body>
-<div id="app" role="application" aria-label="Network connection flow">
+<div id="app" role="application" aria-label="VPN interactive flow">
   <div id="grid" aria-hidden="true"></div>
-
-  <!-- Decorative small chrome -->
   <div class="chrome" aria-hidden="true">
-    <div class="chip">GREENLINK</div>
-    <div class="chip">v2.0</div>
+    <div class="chip">GREENLINK VPN</div>
+    <div class="chip">v3.1</div>
   </div>
 
-  <!-- ==============================================================
-       PAGE 1: LOADING (0 → 100% in ~10 seconds)
-       ============================================================== -->
+  <!-- ===============================================================
+       PAGE 1 — LOADING (0→100% over ~10s)
+       =============================================================== -->
   <section id="page-loading" class="page active" role="region" aria-label="Initializing connection">
     <div class="panel">
       <div class="circle-wrap" aria-live="polite">
@@ -296,39 +181,39 @@
     </div>
   </section>
 
-  <!-- ==============================================================
-       PAGE 2: WIFI CONNECTED (brief pause, then proceed)
-       ============================================================== -->
-  <section id="page-wifi" class="page" role="region" aria-label="Wi‑Fi connected">
+  <!-- ===============================================================
+       PAGE 2 — WI-FI CONNECTED (brief pause)
+       =============================================================== -->
+  <section id="page-wifi" class="page" role="region" aria-label="Wi-Fi connected">
     <svg class="wifi" viewBox="0 0 64 64" aria-hidden="true">
       <path class="arc" d="M2 38a30 30 0 0 1 60 0"/>
       <path class="arc" d="M10 46a22 22 0 0 1 44 0"/>
       <path class="arc" d="M18 54a14 14 0 0 1 28 0"/>
       <circle class="dot" cx="32" cy="60" r="4"/>
     </svg>
-    <h1>Wi‑Fi Connected</h1>
+    <h1>Wi-Fi Connected</h1>
     <p>Link established. Signal healthy.</p>
   </section>
 
-  <!-- ==============================================================
-       PAGE 3: IP + SPEED CONFIRM (Yes → Upload, No → Restart)
-       ============================================================== -->
+  <!-- ===============================================================
+       PAGE 3 — IP + SPEED CONFIRM
+       =============================================================== -->
   <section id="page-ip" class="page" role="region" aria-label="Confirm IP and speeds">
     <div class="panel">
       <h2>Your IP Address</h2>
       <div id="ipText" class="ip mono">0.0.0.0</div>
       <div id="speedText" class="speeds mono">Download: -- Mbps  |  Upload: -- Mbps</div>
-      <div class="confirm-question">Is this correct?</div>
-      <div class="btn-row">
-        <button id="btnYes" aria-label="Confirm information">Yes</button>
-        <button id="btnNo" aria-label="This is not correct">No</button>
+      <div class="question">Is this correct?</div>
+      <div class="row">
+        <button id="btnYes" aria-label="Confirm info">Yes</button>
+        <button id="btnNo"  aria-label="Not correct">No</button>
       </div>
     </div>
   </section>
 
-  <!-- ==============================================================
-       PAGE 4: UPLOADING TO SERVERS
-       ============================================================== -->
+  <!-- ===============================================================
+       PAGE 4 — UPLOADING TO SERVERS
+       =============================================================== -->
   <section id="page-upload" class="page" role="region" aria-label="Uploading to servers">
     <div class="panel">
       <h2 class="uploading-title">Uploading to servers<span class="dots">…</span></h2>
@@ -344,341 +229,524 @@
     </div>
   </section>
 
-  <!-- ==============================================================
-       PAGE 5: UPLOAD SUCCESSFUL + WORLD MAP + CITY NAME ABOVE
-       ============================================================== -->
+  <!-- ===============================================================
+       PAGE 5 — UPLOAD SUCCESSFUL + INTERACTIVE MAP
+       =============================================================== -->
   <section id="page-success" class="page" role="region" aria-label="Upload successful">
-    <h1 class="success-title">Upload Successful</h1>
-    <h3 class="success-subtitle">Connected to server:</h3>
-    <div id="serverName" class="server-name" aria-live="polite">Loading…</div>
+    <h1>Upload Successful</h1>
+    <h3>Connected to server:</h3>
+    <div id="serverName" class="server-name">Loading…</div>
 
-    <div class="map-wrap panel" aria-hidden="false">
-      <!-- WORLD MAP SVG (stylized, single path landmass for aesthetics) -->
-      <svg class="world-map" viewBox="0 0 960 500" role="img" aria-labelledby="worldMapTitle">
-        <title id="worldMapTitle">World map with server markers</title>
-        <rect class="map-bg" width="960" height="500" rx="20" ry="20"/>
+    <div class="map-wrap panel">
+      <!-- Interactive SVG world map with Mercator graticule (stylized land) -->
+      <svg id="map" class="world" viewBox="0 0 960 500" role="img" aria-labelledby="mapTitle">
+        <title id="mapTitle">Interactive world map with server markers</title>
+        <defs>
+          <clipPath id="mapClip"><rect x="0" y="0" width="960" height="500" rx="16" ry="16"/></clipPath>
+        </defs>
 
-        <!-- Landmass (stylized composite path for visual style — not geographic boundaries) -->
-        <g id="landGroup" opacity="0.98">
-          <path class="land" d="M88,308 L116,286 L144,268 L172,248 L206,226 L236,204 L256,188 L284,170 L304,158 L328,152 L352,150 L374,152 L396,158 L416,172 L436,192 L452,216 L468,242 L482,268 L496,298 L508,324 L520,348 L532,370 L548,392 L566,408 L588,420 L612,424 L636,420 L660,408 L684,388 L706,360 L726,328 L744,296 L760,264 L774,236 L788,210 L804,190 L824,174 L848,164 L872,162 L894,166 L914,176 L932,190 L948,206 L960,226 L960,500 L0,500 L0,370 L12,346 L24,328 L42,316 L62,310 Z" />
-          <!-- Extra island clusters for visual richness -->
-          <path class="land" d="M120,120 l26,-8 l18,12 l-10,18 l-22,-2 z"/>
-          <path class="land" d="M790,82 l28,-10 l20,10 l-8,22 l-26,2 z"/>
-          <path class="land" d="M440,98 l18,-10 l20,12 l-8,20 l-22,0 z"/>
-          <path class="land" d="M680,450 l22,-10 l24,14 l-10,18 l-28,0 z"/>
+        <!-- Ocean + graticule grid -->
+        <g id="viewport">
+          <rect class="ocean" x="0" y="0" width="960" height="500" clip-path="url(#mapClip)"></rect>
+
+          <!-- Graticule every 20° -->
+          <g id="graticule" clip-path="url(#mapClip)">
+            <!-- verticals -->
+            <g class="graticule">
+              <line x1="0" y1="0" x2="0" y2="500"/>
+              <line x1="80" y1="0" x2="80" y2="500"/>
+              <line x1="160" y1="0" x2="160" y2="500"/>
+              <line x1="240" y1="0" x2="240" y2="500"/>
+              <line x1="320" y1="0" x2="320" y2="500"/>
+              <line x1="400" y1="0" x2="400" y2="500"/>
+              <line x1="480" y1="0" x2="480" y2="500"/>
+              <line x1="560" y1="0" x2="560" y2="500"/>
+              <line x1="640" y1="0" x2="640" y2="500"/>
+              <line x1="720" y1="0" x2="720" y2="500"/>
+              <line x1="800" y1="0" x2="800" y2="500"/>
+              <line x1="880" y1="0" x2="880" y2="500"/>
+              <line x1="960" y1="0" x2="960" y2="500"/>
+            </g>
+            <!-- horizontals -->
+            <g class="graticule">
+              <line x1="0" y1="0" x2="960" y2="0"/>
+              <line x1="0" y1="50" x2="960" y2="50"/>
+              <line x1="0" y1="100" x2="960" y2="100"/>
+              <line x1="0" y1="150" x2="960" y2="150"/>
+              <line x1="0" y1="200" x2="960" y2="200"/>
+              <line x1="0" y1="250" x2="960" y2="250"/>
+              <line x1="0" y1="300" x2="960" y2="300"/>
+              <line x1="0" y1="350" x2="960" y2="350"/>
+              <line x1="0" y1="400" x2="960" y2="400"/>
+              <line x1="0" y1="450" x2="960" y2="450"/>
+              <line x1="0" y1="500" x2="960" y2="500"/>
+            </g>
+          </g>
+
+          <!-- Landmass (stylized but map-projected rectangle bounds) -->
+          <!-- For performance & style we draw simplified shapes; coordinates are not political borders. -->
+          <g id="land" clip-path="url(#mapClip)">
+            <!-- Big continents patches -->
+            <path class="land" d="M35,315 L70,295 L110,272 L150,250 L170,230 L200,205 L230,185 L260,168 L290,154 L320,146 L350,146 L380,150 L410,162 L430,178 L448,198 L464,222 L480,248 L494,274 L506,298 L518,322 L533,346 L552,366 L574,380 L598,388 L626,388 L650,380 L672,366 L694,344 L712,318 L728,290 L744,260 L758,232 L774,206 L794,186 L818,172 L842,166 L870,168 L894,176 L916,190 L934,210 L946,234 L952,260 L956,286 L958,312 L960,500 L0,500 L0,356 L10,338 L20,326 L28,320 Z"/>
+            <path class="land" d="M130,120 l26,-10 l22,12 l-8,22 l-26,2 z"/>
+            <path class="land" d="M780,82 l28,-10 l20,10 l-8,22 l-26,2 z"/>
+            <path class="land" d="M430,100 l18,-10 l20,12 l-8,20 l-22,0 z"/>
+            <path class="land" d="M690,448 l22,-10 l24,14 l-10,18 l-28,0 z"/>
+          </g>
+
+          <!-- Markers get injected here -->
+          <g id="markers" clip-path="url(#mapClip)"></g>
         </g>
-
-        <!-- Server markers and labels will be injected here -->
-        <g id="serversLayer"></g>
       </svg>
+
+      <!-- Zoom HUD (optional manual controls) -->
+      <div class="zoomHUD" aria-hidden="false">
+        <button id="zoomIn"  title="Zoom in">+</button>
+        <button id="zoomOut" title="Zoom out">−</button>
+        <button id="zoomReset" title="Reset view">⟳</button>
+      </div>
     </div>
 
-    <div class="btn-row">
+    <div class="row">
       <button id="btnFinish">Finish</button>
+    </div>
+  </section>
+
+  <!-- ===============================================================
+       PAGE 6 — USB INJECTION (progress bar + terminal log)
+       =============================================================== -->
+  <section id="page-usb" class="page" role="region" aria-label="USB injection">
+    <div class="panel" style="max-width:960px">
+      <h2 class="usb-title">Inject USB Payload</h2>
+      <div class="bar" aria-label="USB progress">
+        <div id="usbBar" class="bar-fill" style="width:0%"></div>
+      </div>
+      <div id="terminal" class="terminal mono" aria-live="off"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnEject">Eject USB</button>
+        <button id="btnRestart">Restart Flow</button>
+      </div>
     </div>
   </section>
 </div>
 
 <script>
-/* =============================================================================
-   JS CONTROLLER — Single‑file app logic.
-   Flow:
-     Loading (10s) → WiFi (brief pause) → IP Confirm (Yes/No)
-     Yes → Uploading (progress) → Success (random server displayed above map)
-     No  → Restart from Loading
+/* ============================================================================
+   Single-file controller for the full flow + interactive map.
    ========================================================================== */
 (() => {
   "use strict";
 
-  /* -------------------------------------------------------------------------
-     ELEMENT REFERENCES
-     ---------------------------------------------------------------------- */
+  /* ---------------------------------------
+     DOM refs
+     ------------------------------------ */
   const pages = {
     loading: document.getElementById("page-loading"),
     wifi:    document.getElementById("page-wifi"),
     ip:      document.getElementById("page-ip"),
     upload:  document.getElementById("page-upload"),
-    success: document.getElementById("page-success")
+    success: document.getElementById("page-success"),
+    usb:     document.getElementById("page-usb")
   };
 
-  // Circular progress elements (loading & uploading)
-  const loadingFG = pages.loading.querySelector(".fg");
+  const loadingFG  = pages.loading.querySelector(".fg");
   const loadingPct = document.getElementById("loadingPct");
-  const uploadingFG = pages.upload.querySelector(".fg");
-  const uploadPct = document.getElementById("uploadPct");
+  const uploadingFG  = pages.upload.querySelector(".fg");
+  const uploadPct    = document.getElementById("uploadPct");
 
-  // IP/speed confirm
-  const ipText = document.getElementById("ipText");
+  const ipText    = document.getElementById("ipText");
   const speedText = document.getElementById("speedText");
   const btnYes = document.getElementById("btnYes");
   const btnNo  = document.getElementById("btnNo");
 
-  // Success screen
   const serverName = document.getElementById("serverName");
-  const serversLayer = document.getElementById("serversLayer");
-  const btnFinish = document.getElementById("btnFinish");
+  const mapSVG     = document.getElementById("map");
+  const viewport   = document.getElementById("viewport");
+  const markersG   = document.getElementById("markers");
 
-  // Utilities
-  const TAU = Math.PI * 2;
-  const R = 68;                          // circle radius for both indicators
-  const CIRC = 2 * Math.PI * R;          // 427.256...
-  const LOADING_MS = 10000;              // 10 seconds for initial load
-  const WIFI_PAUSE_MS = 1400;            // small pause on "Wi‑Fi Connected"
-  const IP_PAUSE_MS = 600;               // minor delay before showing speeds
-  const UPLOAD_MS = 5200;                // uploading duration
+  const zoomInBtn   = document.getElementById("zoomIn");
+  const zoomOutBtn  = document.getElementById("zoomOut");
+  const zoomResetBtn= document.getElementById("zoomReset");
+  const btnFinish   = document.getElementById("btnFinish");
 
-  // Prepare dash arrays
+  const usbBar    = document.getElementById("usbBar");
+  const terminal  = document.getElementById("terminal");
+  const btnEject  = document.getElementById("btnEject");
+  const btnRestart= document.getElementById("btnRestart");
+
+  /* ---------------------------------------
+     Constants
+     ------------------------------------ */
+  const R = 68;
+  const CIRC = 2 * Math.PI * R;      // 427.256
+  const LOADING_MS = 10000;          // 10 seconds
+  const WIFI_PAUSE = 1400;
+  const IP_REVEAL  = 700;
+  const UPLOAD_MS  = 5200;
+
   loadingFG.style.strokeDasharray = String(CIRC);
   loadingFG.style.strokeDashoffset = String(CIRC);
   uploadingFG.style.strokeDasharray = String(CIRC);
   uploadingFG.style.strokeDashoffset = String(CIRC);
 
-  /* -------------------------------------------------------------------------
-     PAGE SWITCHER
-     ---------------------------------------------------------------------- */
-  function show(name) {
-    for (const key in pages) {
-      pages[key].classList.toggle("active", key === name);
-    }
+  /* ---------------------------------------
+     Utilities
+     ------------------------------------ */
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const randInt = (a,b)=> (Math.random()*(b-a+1)+a)|0;
+  const randFloat=(a,b,d=1)=> Number((Math.random()*(b-a)+a).toFixed(d));
+  const randomIP = () => {
+    const o=()=> clamp(randInt(2,254),1,254);
+    return `${o()}.${o()}.${o()}.${o()}`;
+  };
+  const randomSpeeds = () => ({down:randFloat(120,940,1), up:randFloat(40,420,1)});
+
+  function show(name){
+    for(const k in pages){ pages[k].classList.toggle("active", k===name); }
   }
-
-  /* -------------------------------------------------------------------------
-     RANDOM DATA GENERATORS
-     ---------------------------------------------------------------------- */
-  function randInt(min, max) { return (Math.random() * (max - min + 1) + min) | 0; }
-  function randFloat(min, max, decimals = 1) {
-    const v = Math.random() * (max - min) + min;
-    return Number(v.toFixed(decimals));
+  function setProgress(el, pct){
+    const p = clamp(pct,0,100);
+    el.style.strokeDashoffset = String(CIRC*(1 - p/100));
   }
-  function randomIP() {
-    // Avoid reserved ranges loosely; just keep it looking plausible
-    const octet = () => Math.max(1, Math.min(254, randInt(2, 254)));
-    return `${octet()}.${octet()}.${octet()}.${octet()}`;
-  }
-  function randomSpeeds() {
-    const down = randFloat(120, 940, 1);  // 120–940 Mbps
-    const up   = randFloat(40, 420, 1);   // 40–420 Mbps
-    return { down, up };
-  }
-
-  /* -------------------------------------------------------------------------
-     SERVER LOCATIONS (40 total; 7 popular from the US)
-     Coords are map-space (960 x 500). These are stylized approximate points.
-     ---------------------------------------------------------------------- */
-  const SERVER_POINTS = [
-    // 7 US popular
-    { name: "New York, USA",        x: 340, y: 200 },
-    { name: "Los Angeles, USA",     x: 150, y: 280 },
-    { name: "Chicago, USA",         x: 300, y: 210 },
-    { name: "Houston, USA",         x: 290, y: 270 },
-    { name: "Miami, USA",           x: 360, y: 320 },
-    { name: "Seattle, USA",         x: 170, y: 170 },
-    { name: "San Francisco, USA",   x: 170, y: 250 },
-
-    // North America
-    { name: "Toronto, Canada",      x: 320, y: 180 },
-    { name: "Vancouver, Canada",    x: 200, y: 170 },
-    { name: "Montreal, Canada",     x: 340, y: 185 },
-
-    // Europe
-    { name: "London, UK",           x: 580, y: 130 },
-    { name: "Paris, France",        x: 600, y: 150 },
-    { name: "Berlin, Germany",      x: 625, y: 140 },
-    { name: "Madrid, Spain",        x: 585, y: 190 },
-    { name: "Rome, Italy",          x: 640, y: 180 },
-    { name: "Amsterdam, Netherlands", x: 610, y: 140 },
-    { name: "Dublin, Ireland",      x: 560, y: 120 },
-    { name: "Zurich, Switzerland",  x: 620, y: 160 },
-    { name: "Stockholm, Sweden",    x: 640, y: 100 },
-
-    // Middle East / Africa
-    { name: "Dubai, UAE",           x: 690, y: 240 },
-    { name: "Istanbul, Turkey",     x: 660, y: 180 },
-    { name: "Cairo, Egypt",         x: 650, y: 220 },
-    { name: "Johannesburg, South Africa", x: 670, y: 360 },
-
-    // Asia
-    { name: "Mumbai, India",        x: 720, y: 250 },
-    { name: "Singapore",            x: 780, y: 280 },
-    { name: "Beijing, China",       x: 770, y: 160 },
-    { name: "Shanghai, China",      x: 780, y: 180 },
-    { name: "Hong Kong",            x: 790, y: 200 },
-    { name: "Tokyo, Japan",         x: 850, y: 190 },
-    { name: "Seoul, South Korea",   x: 830, y: 180 },
-    { name: "Bangkok, Thailand",    x: 795, y: 240 },
-
-    // Oceania
-    { name: "Sydney, Australia",    x: 880, y: 390 },
-    { name: "Melbourne, Australia", x: 870, y: 410 },
-    { name: "Brisbane, Australia",  x: 890, y: 370 },
-    { name: "Auckland, New Zealand",x: 930, y: 430 },
-
-    // Latin America
-    { name: "Mexico City, Mexico",  x: 330, y: 290 },
-    { name: "Bogotá, Colombia",     x: 400, y: 310 },
-    { name: "Lima, Peru",           x: 410, y: 350 },
-    { name: "São Paulo, Brazil",    x: 470, y: 370 },
-    { name: "Buenos Aires, Argentina", x: 500, y: 410 }
-  ];
-
-  /* -------------------------------------------------------------------------
-     RENDER SERVER MARKERS ON MAP
-     ---------------------------------------------------------------------- */
-  function clearServers() {
-    while (serversLayer.firstChild) serversLayer.removeChild(serversLayer.firstChild);
-  }
-
-  function renderServers(highlightName) {
-    clearServers();
-    SERVER_POINTS.forEach(pt => {
-      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      g.setAttribute("transform", `translate(${pt.x}, ${pt.y})`);
-
-      const r = (pt.name === highlightName) ? 4.8 : 3.2;
-      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("class", "server-dot");
-      circle.setAttribute("r", String(r));
-      circle.setAttribute("cx", "0");
-      circle.setAttribute("cy", "0");
-
-      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("class", "server-label");
-      text.setAttribute("x", "6");
-      text.setAttribute("y", "-6");
-      text.textContent = pt.name;
-
-      g.appendChild(circle);
-      g.appendChild(text);
-      serversLayer.appendChild(g);
-    });
-  }
-
-  /* -------------------------------------------------------------------------
-     PROGRESS ANIMATION HELPERS
-     ---------------------------------------------------------------------- */
-  function setProgress(el, pct) {
-    const clamped = Math.max(0, Math.min(100, pct));
-    const offset = CIRC * (1 - clamped / 100);
-    el.style.strokeDashoffset = String(offset);
-  }
-
-  function animateProgress(durationMs, onUpdate, onDone) {
+  function animateProgress(duration, onUpdate, onDone){
     const t0 = performance.now();
-    function frame(now) {
-      const t = Math.min(1, (now - t0) / durationMs);
+    function frame(now){
+      const t = Math.min(1, (now - t0)/duration);
       onUpdate(t);
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else if (onDone) {
-        onDone();
-      }
+      if(t<1) requestAnimationFrame(frame); else onDone && onDone();
     }
     requestAnimationFrame(frame);
   }
 
-  /* -------------------------------------------------------------------------
-     FLOW HANDLERS
-     ---------------------------------------------------------------------- */
-  function runLoading() {
-    show("loading");
-    // Reset progress
-    setProgress(loadingFG, 0);
-    loadingPct.textContent = "0%";
+  /* ---------------------------------------
+     Mercator projection for SVG (960 x 500)
+     (lat in degrees, lon in degrees)
+     ------------------------------------ */
+  const W=960, H=500;
+  const MAX_LAT=85.05113; // WebMercator clamp
+  function project(lon, lat){
+    const λ = (lon+180)/360 * W;
+    const φ = clamp(lat, -MAX_LAT, MAX_LAT) * Math.PI/180;
+    const y = (1 - Math.log(Math.tan(Math.PI/4 + φ/2))/Math.PI)/2 * H;
+    return [λ, y];
+  }
 
-    animateProgress(LOADING_MS, t => {
-      const pct = Math.round(t * 100);
-      setProgress(loadingFG, pct);
-      loadingPct.textContent = pct + "%";
-    }, () => {
-      // After loading completes, briefly show Wi‑Fi screen
-      show("wifi");
-      setTimeout(() => {
-        // Then proceed to IP confirm
-        runIPConfirm();
-      }, WIFI_PAUSE_MS);
+  /* ---------------------------------------
+     40 Server locations (7 US popular + 33 worldwide)
+     ------------------------------------ */
+  const SERVERS = [
+    // US popular (approx lats/lons)
+    {name:"New York, USA",        lat:40.7128, lon:-74.0060},
+    {name:"Los Angeles, USA",     lat:34.0522, lon:-118.2437},
+    {name:"Chicago, USA",         lat:41.8781, lon:-87.6298},
+    {name:"Houston, USA",         lat:29.7604, lon:-95.3698},
+    {name:"Miami, USA",           lat:25.7617, lon:-80.1918},
+    {name:"Seattle, USA",         lat:47.6062, lon:-122.3321},
+    {name:"San Francisco, USA",   lat:37.7749, lon:-122.4194},
+
+    // North America
+    {name:"Toronto, Canada",      lat:43.65107, lon:-79.347015},
+    {name:"Vancouver, Canada",    lat:49.2827, lon:-123.1207},
+    {name:"Montreal, Canada",     lat:45.5017, lon:-73.5673},
+
+    // Europe
+    {name:"London, UK",           lat:51.5074, lon:-0.1278},
+    {name:"Paris, France",        lat:48.8566, lon:2.3522},
+    {name:"Berlin, Germany",      lat:52.5200, lon:13.4050},
+    {name:"Madrid, Spain",        lat:40.4168, lon:-3.7038},
+    {name:"Rome, Italy",          lat:41.9028, lon:12.4964},
+    {name:"Amsterdam, Netherlands",lat:52.3676, lon:4.9041},
+    {name:"Dublin, Ireland",      lat:53.3498, lon:-6.2603},
+    {name:"Zurich, Switzerland",  lat:47.3769, lon:8.5417},
+    {name:"Stockholm, Sweden",    lat:59.3293, lon:18.0686},
+
+    // Middle East / Africa
+    {name:"Dubai, UAE",           lat:25.2048, lon:55.2708},
+    {name:"Istanbul, Turkey",     lat:41.0082, lon:28.9784},
+    {name:"Cairo, Egypt",         lat:30.0444, lon:31.2357},
+    {name:"Johannesburg, South Africa", lat:-26.2041, lon:28.0473},
+
+    // Asia
+    {name:"Mumbai, India",        lat:19.0760, lon:72.8777},
+    {name:"Singapore",            lat:1.3521, lon:103.8198},
+    {name:"Beijing, China",       lat:39.9042, lon:116.4074},
+    {name:"Shanghai, China",      lat:31.2304, lon:121.4737},
+    {name:"Hong Kong",            lat:22.3193, lon:114.1694},
+    {name:"Tokyo, Japan",         lat:35.6762, lon:139.6503},
+    {name:"Seoul, South Korea",   lat:37.5665, lon:126.9780},
+    {name:"Bangkok, Thailand",    lat:13.7563, lon:100.5018},
+
+    // Oceania
+    {name:"Sydney, Australia",    lat:-33.8688, lon:151.2093},
+    {name:"Melbourne, Australia", lat:-37.8136, lon:144.9631},
+    {name:"Brisbane, Australia",  lat:-27.4698, lon:153.0251},
+    {name:"Auckland, New Zealand",lat:-36.8485, lon:174.7633},
+
+    // Latin America
+    {name:"Mexico City, Mexico",  lat:19.4326, lon:-99.1332},
+    {name:"Bogotá, Colombia",     lat:4.7110, lon:-74.0721},
+    {name:"Lima, Peru",           lat:-12.0464, lon:-77.0428},
+    {name:"São Paulo, Brazil",    lat:-23.5558, lon:-46.6396},
+    {name:"Buenos Aires, Argentina",lat:-34.6037, lon:-58.3816}
+  ];
+
+  /* ---------------------------------------
+     MAP — zoom & pan (mouse + touch pan)
+     ------------------------------------ */
+  let scale = 1, minScale=.8, maxScale=6;
+  let tx=0, ty=0;    // translate
+  let isPanning=false, lastX=0, lastY=0;
+
+  function applyTransform(){
+    viewport.setAttribute("transform", `translate(${tx},${ty}) scale(${scale})`);
+  }
+  function clientToSVGPoint(clientX, clientY){
+    const pt = mapSVG.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    const ctm = mapSVG.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+  function zoomAt(svgX, svgY, dz){
+    const newScale = clamp(scale * dz, minScale, maxScale);
+    // keep point (svgX,svgY) stable: adjust translation accordingly
+    tx = svgX - (svgX - tx) * (newScale/scale);
+    ty = svgY - (svgY - ty) * (newScale/scale);
+    scale = newScale;
+    applyTransform();
+  }
+
+  // Mouse wheel zoom
+  mapSVG.addEventListener("wheel", (e)=>{
+    e.preventDefault();
+    const {x,y} = clientToSVGPoint(e.clientX, e.clientY);
+    const dz = e.deltaY<0 ? 1.15 : 1/1.15;
+    zoomAt(x,y,dz);
+  }, {passive:false});
+
+  // Drag pan
+  mapSVG.addEventListener("mousedown", e=>{
+    isPanning=true; lastX=e.clientX; lastY=e.clientY;
+  });
+  window.addEventListener("mousemove", e=>{
+    if(!isPanning) return;
+    const dx=e.clientX-lastX, dy=e.clientY-lastY;
+    lastX=e.clientX; lastY=e.clientY;
+    tx += dx; ty += dy;
+    applyTransform();
+  });
+  window.addEventListener("mouseup", ()=> isPanning=false);
+
+  // Touch pan (simple one-finger)
+  mapSVG.addEventListener("touchstart", e=>{
+    if(e.touches.length===1){
+      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+    }
+  }, {passive:true});
+  mapSVG.addEventListener("touchmove", e=>{
+    if(e.touches.length===1){
+      const t=e.touches[0];
+      const dx=t.clientX-lastX, dy=t.clientY-lastY;
+      lastX=t.clientX; lastY=t.clientY;
+      tx+=dx; ty+=dy; applyTransform();
+    }
+  }, {passive:true});
+
+  // Optional HUD controls
+  zoomInBtn.onclick  = ()=> zoomAt(W/2, H/2, 1.2);
+  zoomOutBtn.onclick = ()=> zoomAt(W/2, H/2, 1/1.2);
+  zoomResetBtn.onclick = ()=>{
+    scale=1; tx=0; ty=0; applyTransform();
+  };
+
+  /* ---------------------------------------
+     MARKERS (pop-in animation)
+     ------------------------------------ */
+  function clearMarkers(){
+    while(markersG.firstChild) markersG.removeChild(markersG.firstChild);
+  }
+  function addMarker(name, lon, lat, idx=0, pulse=false){
+    const [x,y] = project(lon, lat);
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","marker"+(pulse?" pulse":""));
+    g.setAttribute("transform",`translate(${x},${y})`);
+    g.style.animationDelay = `${idx*35}ms`;  // staggered pop
+
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("r", pulse? 4.8 : 3.2);
+    c.setAttribute("cx","0"); c.setAttribute("cy","0");
+
+    const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x","6"); t.setAttribute("y","-6");
+    t.textContent = name;
+
+    g.appendChild(c); g.appendChild(t);
+    markersG.appendChild(g);
+  }
+  function renderAllMarkers(highlightName=null){
+    clearMarkers();
+    SERVERS.forEach((s,i)=>{
+      addMarker(s.name, s.lon, s.lat, i, s.name===highlightName);
     });
   }
 
-  function runIPConfirm() {
-    show("ip");
-
-    // Generate randomized info
-    const ip = randomIP();
-    const { down, up } = randomSpeeds();
-
-    // Fill UI
-    ipText.textContent = ip;
-    // slight delay to stage the reveal effect
-    speedText.textContent = "Analyzing…";
-    setTimeout(() => {
-      speedText.textContent = `Download: ${down} Mbps  |  Upload: ${up} Mbps`;
-    }, IP_PAUSE_MS);
-
-    // Button handlers
-    btnYes.onclick = () => {
-      runUploading();
-    };
-
-    btnNo.onclick = () => {
-      // Restart to the loading page (like "loading internet thing")
-      runLoading();
-    };
+  /* ---------------------------------------
+     FLOW
+     ------------------------------------ */
+  function runLoading(){
+    show("loading");
+    setProgress(loadingFG,0); loadingPct.textContent="0%";
+    animateProgress(LOADING_MS, t=>{
+      const pct=Math.round(t*100);
+      setProgress(loadingFG, pct);
+      loadingPct.textContent = pct+"%";
+    }, ()=>{
+      show("wifi");
+      setTimeout(()=> runIPConfirm(), WIFI_PAUSE);
+    });
   }
 
-  function runUploading() {
-    show("upload");
-    setProgress(uploadingFG, 0);
-    uploadPct.textContent = "0%";
+  function runIPConfirm(){
+    show("ip");
+    const ip = randomIP();
+    const {down,up} = randomSpeeds();
+    ipText.textContent = ip;
+    speedText.textContent = "Analyzing…";
+    setTimeout(()=> {
+      speedText.textContent = `Download: ${down} Mbps  |  Upload: ${up} Mbps`;
+    }, IP_REVEAL);
 
-    animateProgress(UPLOAD_MS, t => {
-      const pct = Math.round(t * 100);
+    btnYes.onclick = ()=> runUploading();
+    btnNo.onclick  = ()=> runLoading();
+  }
+
+  function runUploading(){
+    show("upload");
+    setProgress(uploadingFG,0); uploadPct.textContent="0%";
+    animateProgress(UPLOAD_MS, t=>{
+      const pct=Math.round(t*100);
       setProgress(uploadingFG, pct);
-      uploadPct.textContent = pct + "%";
-    }, () => {
-      // Done → success page
+      uploadPct.textContent = pct+"%";
+    }, ()=>{
       runSuccess();
     });
   }
 
-  function runSuccess() {
+  function runSuccess(){
     show("success");
-    // Pick a random server and render markers
-    const pick = SERVER_POINTS[(Math.random() * SERVER_POINTS.length) | 0];
+    const pick = SERVERS[(Math.random()*SERVERS.length)|0];
     serverName.textContent = pick.name;
-    renderServers(pick.name);
+    renderAllMarkers(pick.name);
+    // ensure default view centers roughly around selected server
+    const [x,y] = project(pick.lon, pick.lat);
+    scale=1.6;
+    tx = W/2 - x*scale;
+    ty = H/2 - y*scale;
+    applyTransform();
 
-    // Finish button just does nothing or could loop back if you want
-    btnFinish.onclick = () => {
-      // Optional: Reset to IP confirm or to loading; here we keep user on success.
-      // Uncomment to loop back to IP screen:
-      // runIPConfirm();
-      // Or to restart full flow:
-      // runLoading();
-      btnFinish.blur();
-    };
+    btnFinish.onclick = ()=> runUSBInject();
   }
 
-  /* -------------------------------------------------------------------------
+  /* ---------------------------------------
+     USB Inject: progress + terminal mixed
+     ------------------------------------ */
+  const LOGS = [
+    "Mounting USB device… ",
+    "Checking filesystem… ",
+    "Allocating buffer… ",
+    "Generating encryption keys… ",
+    "Opening device handle… ",
+    "Negotiating protocol… ",
+    "Writing header… ",
+    "Streaming blocks… ",
+    "Verifying CRC… ",
+    "Committing journal… ",
+    "Flushing caches… ",
+    "Finalizing… "
+  ];
+
+  function termWrite(line, cls="log-line", delay=0){
+    setTimeout(()=>{
+      const span = document.createElement("div");
+      span.className = `log-line ${cls}`;
+      span.textContent = line;
+      terminal.appendChild(span);
+      terminal.scrollTop = terminal.scrollHeight;
+    }, delay);
+  }
+  function termWriteOK(base, delay=0){
+    setTimeout(()=>{
+      const row = document.createElement("div");
+      row.className="log-line";
+      row.innerHTML = `${base}<span class="ok">OK</span>`;
+      terminal.appendChild(row);
+      terminal.scrollTop = terminal.scrollHeight;
+    }, delay);
+  }
+  function runUSBInject(){
+    show("usb");
+    usbBar.style.width="0%";
+    terminal.textContent=""; // clear
+
+    // mixed progress + logs
+    const total = 100;
+    let cur = 0;
+    const timer = setInterval(()=>{
+      cur = clamp(cur + randInt(2,6), 0, total);
+      usbBar.style.width = cur + "%";
+      if(cur >= total){
+        clearInterval(timer);
+        usbBar.style.width = "100%";
+        termWriteOK("Transfer complete… ", 100);
+        termWriteOK("Unmounting device… ", 400);
+        termWrite(`<span class="check"></span>USB Injection Successful — Device Safe to Remove`, "ok", 900);
+      }
+    }, 140);
+
+    // staged logs (with some sector spam)
+    let t=100;
+    LOGS.forEach((base,i)=>{
+      if(base==="Streaming blocks… "){
+        termWrite(base, "warn", t); t+=250;
+        // write a bunch of pseudo sectors
+        for(let s=0;s<18;s++){
+          const n = 1024 + s*randInt(8,64);
+          termWrite(`Writing sector ${n}… `, "log-line", t);
+          termWrite("OK", "ok", t+160);
+          t+=140;
+        }
+      } else {
+        termWriteOK(base, t);
+        t+= randInt(200,380);
+      }
+    });
+
+    btnEject.onclick = ()=>{
+      termWriteOK("Eject command issued… ", 0);
+      termWrite("Drive ready. You may unplug.", "ok", 300);
+    };
+    btnRestart.onclick = ()=> runLoading();
+  }
+
+  /* ---------------------------------------
      INIT
-     ---------------------------------------------------------------------- */
-  // Initial render of all server locations (no highlight)
-  renderServers();
-  // Begin the flow
+     ------------------------------------ */
+  renderAllMarkers(null); // pre-render (not visible until success page)
   runLoading();
 })();
 </script>
 
 <!--
-================================================================================
-NOTES:
-- No "steps" wording anywhere in the UI text.
-- Single index.html page, with 5 internal screen states toggled via JS.
-- Bright green & black modern look, with glow and subtle grid background.
-- World map SVG included; server city name appears above it, and markers/labels
-  are placed on the map (40 total, 7 from the US).
-- If you want the Finish button to loop back, uncomment in runSuccess().
-- If you want different durations, adjust LOADING_MS and UPLOAD_MS.
-================================================================================
+===============================================================================
+Notes:
+- All in one file (index.html). No external libs.
+- SVG world map uses a stylized land patch + graticule. Server dots are positioned
+  using Mercator projection (so they appear in the correct real positions).
+- Mouse wheel zoom + drag panning; simple touch pan supported. Pinch-zoom can be
+  added if you want later.
+- Dots "pop" in; the selected server pulses.
+- USB Inject screen mixes a progress bar with terminal-style scrolling logs.
+- Adjust timings (LOADING_MS, UPLOAD_MS) to taste.
+===============================================================================
 -->
 </body>
 </html>
